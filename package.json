@@ -1,0 +1,31 @@
+{
+  "name": "produlab-backend",
+  "version": "0.1.0",
+  "description": "Backend del sistema web de gestión de experimentos productivos del Laboratorio de Producción de la Universidad Católica del Norte.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crubexx/Produlab---SistemaWeb-BackEnd.git"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "backend",
+    "produlab",
+    "ucn"
+  ],
+  "author": "Rubén Rivera Rivera",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
