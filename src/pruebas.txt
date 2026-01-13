@@ -1,0 +1,15 @@
+http://localhost:3000/api/auth/login
+{
+  "email": "admin@wrist.cl",
+  "password": "Admin123!"
+}
+
+http://localhost:3000/api/auth/register
+{
+  "email": "nuevo@wrist.cl",
+  "name": "Nuevo Usuario",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "age": 22,
+  "gender": "M"
+}

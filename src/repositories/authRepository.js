@@ -1,3 +1,5 @@
+// ACC-001
+
 const users = [
   {
     id: 1,
@@ -22,10 +24,18 @@ const users = [
   }
 ];
 
-const findByEmail = async (email) => {
+// ACC-001 / ACC-002: Buscar usuario por email
+export const findUserByEmail = async (email) => {
   return users.find(user => user.email === email);
 };
 
-module.exports = {
-  findByEmail
+// ACC-002
+export const createUser = async (userData) => {
+  const newUser = {
+    id: users.length + 1,
+    ...userData
+  };
+
+  users.push(newUser);
+  return newUser;
 };
