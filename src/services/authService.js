@@ -1,46 +1,101 @@
+// ACC-001: Inicio de Sesión 
 export const loginUser = async (email, password) => {
-  // LOGIN SIMULADO 
-  if (email === 'admin@wrist.cl' && password === 'Admin123!') {
-    return {
-      id: 1,
-      name: 'Admin User',
-      email: 'admin@wrist.cl',
-      role: 'ADMIN'
-    };
+  // 1. Buscar usuario por email
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    return null;
   }
 
-  return null;
+  // 2. Verificar estado de la cuenta
+  if (user.status !== 'ACTIVE') {
+    throw new Error('La cuenta no se encuentra activa, contacte al administrador.');
+  }
+
+  // 3. Comparar password con bcrypt
+  const passwordMatch = await bcrypt.compare(
+    password,
+    user.password_hash
+  );
+
+  if (!passwordMatch) {
+    return null;
+  }
+
+  // 4. Retornar usuario SIN password
+  return {
+    id_user: user.id_user,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    role: user.role
+  };
 };
 
-import { findUserByEmail, createUser } from '../repositories/authRepository.js';
+import bcrypt from 'bcrypt';
+import { findUserByEmail, findUserByRut, createUser } from '../repositories/authRepository.js';
+import { isValidRut } from '../utils/rutValidator.js';
 
+// ACC-002: Registro de Usuario
 export const registerUser = async (data) => {
   const {
+    first_name,
+    last_name,
+    rut,
     email,
-    name,
     password,
     confirmPassword,
-    age,
-    gender
+    gender,
+    date_of_birth
   } = data;
 
   // 1. Campos obligatorios
-  if (!email || !name || !password || !confirmPassword || !age || !gender) {
+  if (
+    !first_name ||
+    !last_name ||
+    !rut ||
+    !email ||
+    !password ||
+    !confirmPassword ||
+    !gender ||
+    !date_of_birth
+  ) {
     throw new Error('Todos los campos son obligatorios');
   }
 
-  // 2. Email válido
+  // 2. Validación nombre
+  if (first_name.length < 2) {
+    throw new Error('El nombre debe tener al menos 2 caracteres');
+  }
+
+  // 3. Validación apellido
+  if (last_name.length < 2) {
+    throw new Error('El apellido debe tener al menos 2 caracteres');
+  }
+
+  // 4. Validación formato RUT (sin puntos ni guión)
+  const rutFormatRegex = /^\d{7,8}[0-9Kk]$/;
+  if (!rutFormatRegex.test(rut)) {
+    throw new Error('El RUT debe ingresarse sin puntos ni guión');
+  }
+
+  // 5. Validación RUT chileno (DV)
+  if (!isValidRut(rut)) {
+    throw new Error('El RUT ingresado no es válido');
+  }
+
+  // 6. Email válido
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     throw new Error('El correo electrónico no tiene un formato válido');
   }
 
-  // 3. Password match
+  // 7. Password match
   if (password !== confirmPassword) {
     throw new Error('Las contraseñas no coinciden');
   }
 
-  // 4. Password rules (ERS)
+  // 8. Reglas de contraseña (ERS)
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
 
@@ -50,26 +105,39 @@ export const registerUser = async (data) => {
     );
   }
 
-  // 5. Usuario existente
-  const existingUser = await findUserByEmail(email);
-  if (existingUser) {
+  // 9. Validar RUT existente
+  const existingRut = await findUserByRut(rut);
+  if (existingRut) {
     throw new Error(
-      'Ya existe una cuenta con este correo. Puedes iniciar sesión o recuperar tu contraseña'
+      'Ya existe una cuenta asociada a este RUT. Si es tu cuenta, intenta iniciar sesión.'
     );
   }
 
-  // 6. Crear usuario
-  const newUser = await createUser({
+  // 10. Validar Email existente
+  const existingEmail = await findUserByEmail(email);
+  if (existingEmail) {
+    throw new Error(
+      'Ya existe una cuenta con este correo. Puedes iniciar sesión o recuperar tu contraseña.'
+    );
+  }
+
+  // 11. Hash password
+  const password_hash = await bcrypt.hash(password, 10);
+
+  // 12. Crear usuario
+  const userId = await createUser({
+    first_name,
+    last_name,
+    rut,
     email,
-    name,
-    password,
-    age,
+    password_hash,
+    role: 'USUARIO',
     gender,
-    role: 'USUARIO'
+    date_of_birth
   });
 
   return {
     message: 'Usuario registrado correctamente',
-    user: newUser
+    userId
   };
 };

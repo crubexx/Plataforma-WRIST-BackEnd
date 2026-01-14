@@ -22,8 +22,10 @@
   "author": "Rubén Rivera Rivera",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "dotenv": "^16.4.5"
+    "mysql2": "^3.16.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"
