@@ -1,3 +1,8 @@
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { findUserByEmail, findUserByRut, createUser } from '../repositories/authRepository.js';
+import { isValidRut } from '../utils/rutValidator.js';
+
 // ACC-001: Inicio de Sesión 
 export const loginUser = async (email, password) => {
   // 1. Buscar usuario por email
@@ -12,7 +17,7 @@ export const loginUser = async (email, password) => {
     throw new Error('La cuenta no se encuentra activa, contacte al administrador.');
   }
 
-  // 3. Comparar password con bcrypt
+  // 3. Verificar contraseña
   const passwordMatch = await bcrypt.compare(
     password,
     user.password_hash
@@ -22,19 +27,30 @@ export const loginUser = async (email, password) => {
     return null;
   }
 
-  // 4. Retornar usuario SIN password
-  return {
+  // 4. Payload del token
+  const payload = {
     id_user: user.id_user,
-    first_name: user.first_name,
-    last_name: user.last_name,
     email: user.email,
     role: user.role
   };
-};
 
-import bcrypt from 'bcrypt';
-import { findUserByEmail, findUserByRut, createUser } from '../repositories/authRepository.js';
-import { isValidRut } from '../utils/rutValidator.js';
+  // 5. Generar JWT
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
+
+  // 6. Retornar token y usuario
+  return {
+    token,
+    user: {
+      id_user: user.id_user,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      role: user.role
+    }
+  };
+};
 
 // ACC-002: Registro de Usuario
 export const registerUser = async (data) => {

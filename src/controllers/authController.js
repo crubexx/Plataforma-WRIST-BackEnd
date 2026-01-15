@@ -1,6 +1,6 @@
 import { loginUser, registerUser } from '../services/authService.js';
 
-// ACC-001
+// ACC-001: Iniciar Sesión
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -27,7 +27,7 @@ export const login = async (req, res) => {
   }
 };
 
-// ACC-002
+// ACC-002: Registro de Usuario
 export const register = async (req, res) => {
   try {
     const result = await registerUser(req.body);
@@ -37,4 +37,11 @@ export const register = async (req, res) => {
       message: error.message
     });
   }
+};
+
+// ACC-003: Cerrar Sesión
+export const logout = async (req, res) => {
+  return res.status(200).json({
+    message: 'Sesión cerrada correctamente'
+  });
 };
