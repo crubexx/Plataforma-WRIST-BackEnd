@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, findUserByRut, createUser } from '../repositories/authRepository.js';
+import crypto from 'crypto';
+import { sendResetPasswordEmail } from '../utils/mailService.js';
+import { findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
 import { isValidRut } from '../utils/rutValidator.js';
 
 // ACC-001: Inicio de Sesión 
@@ -156,4 +158,37 @@ export const registerUser = async (data) => {
     message: 'Usuario registrado correctamente',
     userId
   };
+};
+
+// ACC-004: Solicitar recuperación
+export const recoverPassword = async (email) => {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new Error('El correo electrónico no se encuentra registrado');
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+  await saveResetToken(email, token, expires);
+
+  const link = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  await sendResetPasswordEmail(email, link);
+
+  return { message: 'Correo de recuperación enviado' };
+};
+
+// ACC-004: Resetear contraseña
+export const resetPassword = async (token, newPassword) => {
+  const user = await findUserByResetToken(token);
+
+  if (!user) {
+    throw new Error('El enlace es inválido o ha expirado');
+  }
+
+  const password_hash = await bcrypt.hash(newPassword, 10);
+  await updatePassword(user.id_user, password_hash);
+
+  return { message: 'Contraseña actualizada correctamente' };
 };

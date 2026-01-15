@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register, logout } from '../controllers/authController.js';
+import { login, register, logout, recover, reset } from '../controllers/authController.js';
 
 const router = Router();
 
@@ -11,5 +11,9 @@ router.post('/register', register);
 
 // ACC-003: Cerrar Sesión
 router.post('/logout', logout);
+
+// ACC-004: Cambiar contraseña
+router.post('/recover-password', recover);
+router.post('/reset-password', reset);
 
 export default router;

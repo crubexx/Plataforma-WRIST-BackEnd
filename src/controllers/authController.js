@@ -1,4 +1,4 @@
-import { loginUser, registerUser } from '../services/authService.js';
+import { loginUser, registerUser, recoverPassword, resetPassword } from '../services/authService.js';
 
 // ACC-001: Iniciar Sesión
 export const login = async (req, res) => {
@@ -44,4 +44,26 @@ export const logout = async (req, res) => {
   return res.status(200).json({
     message: 'Sesión cerrada correctamente'
   });
+};
+
+// ACC-004: Cambiar contraseña
+export const recover = async (req, res) => {
+  try {
+    const result = await recoverPassword(req.body.email);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
+export const reset = async (req, res) => {
+  try {
+    const result = await resetPassword(
+      req.body.token,
+      req.body.newPassword
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
