@@ -3,7 +3,7 @@ import { pool } from '../config/database.js';
 // Buscar usuario por email
 export const findUserByEmail = async (email) => {
   const [rows] = await pool.query(
-    'SELECT * FROM User WHERE email = ?',
+    'SELECT * FROM user WHERE email = ?',
     [email]
   );
 
@@ -12,7 +12,7 @@ export const findUserByEmail = async (email) => {
 
 // Buscar usuario por RUT
 export const findUserByRut = async (rut) => {
-  const sql = `SELECT id_user FROM User WHERE rut = ? LIMIT 1`;
+  const sql = `SELECT id_user FROM user WHERE rut = ? LIMIT 1`;
   const [rows] = await pool.execute(sql, [rut]);
   return rows.length > 0 ? rows[0] : null;
 };
@@ -20,7 +20,7 @@ export const findUserByRut = async (rut) => {
 // Guardar token de recuperación
 export const saveResetToken = async (email, token, expires) => {
   await pool.query(
-    `UPDATE User 
+    `UPDATE user 
      SET reset_token = ?, reset_token_expires = ?
      WHERE email = ?`,
     [token, expires, email]
@@ -30,7 +30,7 @@ export const saveResetToken = async (email, token, expires) => {
 // Buscar usuario por token
 export const findUserByResetToken = async (token) => {
   const [rows] = await pool.query(
-    `SELECT * FROM User 
+    `SELECT * FROM user 
      WHERE reset_token = ? 
      AND reset_token_expires > NOW()`,
     [token]
@@ -41,7 +41,7 @@ export const findUserByResetToken = async (token) => {
 // Actualizar contraseña
 export const updatePassword = async (id_user, password_hash) => {
   await pool.query(
-    `UPDATE User
+    `UPDATE user
      SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL
      WHERE id_user = ?`,
     [password_hash, id_user]
@@ -62,7 +62,7 @@ export const createUser = async (userData) => {
   } = userData;
 
   const [result] = await pool.query(
-    `INSERT INTO User 
+    `INSERT INTO user 
       (first_name, last_name, rut, email, password_hash, role, gender, date_of_birth, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
     [
