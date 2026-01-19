@@ -1,0 +1,22 @@
+Descargar en extensiones "Thunder Client" luego te saldrá una flecha en la barra de la
+izquierda que es el logo, le das a New Request y ahí haces las solicitudes
+
+// ACC-001
+http://localhost:3000/api/auth/login
+{
+  "email": "admin@wrist.cl",
+  "password": "Admin123!"
+}
+
+// ACC-002
+http://localhost:3000/api/auth/register
+{
+  "first_name": "Rubén",
+  "last_name": "Rivera",
+  "rut": "199685104",
+  "email": "ruben.rivera@alumnos.ucn.cl",
+  "password": "User123!",
+  "confirmPassword": "User123!",
+  "gender": "Masculino",
+  "date_of_birth": "1998-11-26"
+}

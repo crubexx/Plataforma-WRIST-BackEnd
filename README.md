@@ -56,6 +56,7 @@ El backend sigue una **Arquitectura por Capas (Layered Architecture)**, separand
 
 ---
 
+```bash
 ## Estructura de Carpetas
 src/
 ├── config/ # Configuración de base de datos y entorno
@@ -96,6 +97,7 @@ src/
 ├── app.js # Configuración principal de Express
 └── server.js # Punto de entrada del servidor
 
+```
 ---
 
 ## Principios de la Arquitectura
@@ -157,6 +159,9 @@ npm run dev
 
 # Ejecutar en modo producción
 npm start
+
+```
+
 Convenciones de Código
 Nomenclatura
 
