@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register, logout, recover, reset } from '../controllers/authController.js';
+import { login, register, logout, recover, reset, googleAuth } from '../controllers/authController.js';
 
 const router = Router();
 
@@ -15,5 +15,8 @@ router.post('/logout', logout);
 // ACC-004: Cambiar contraseña
 router.post('/recover-password', recover);
 router.post('/reset-password', reset);
+
+// ACC-005: Autenticación con Google
+router.post('/google', googleAuth);
 
 export default router;

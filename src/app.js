@@ -24,6 +24,10 @@ app.use('/api/auth', authRoutes);
     const connection = await pool.getConnection();
     console.log('✅ MySQL conectado correctamente');
     connection.release();
+
+    // Ejecutar migraciones completas
+    const { runMigrations } = await import('./config/migrations.js');
+    await runMigrations();
   } catch (error) {
     console.error('❌ Error conectando a MySQL:', error.message);
   }

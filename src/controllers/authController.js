@@ -1,4 +1,6 @@
 import { loginUser, registerUser, recoverPassword, resetPassword } from '../services/authService.js';
+import { authenticateWithGoogle } from '../services/googleAuthService.js';
+
 
 // ACC-001: Iniciar Sesión
 export const login = async (req, res) => {
@@ -65,5 +67,39 @@ export const reset = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// ACC-005: Autenticación con Google
+export const googleAuth = async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({
+      message: 'Token de Google no proporcionado'
+    });
+  }
+
+  try {
+    const result = await authenticateWithGoogle(idToken);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Error en Google Auth:', error.message);
+
+    if (error.message.includes('Token used too late')) {
+      return res.status(401).json({
+        message: 'Token de Google expirado'
+      });
+    }
+
+    if (error.message.includes('no está verificado')) {
+      return res.status(400).json({
+        message: error.message
+      });
+    }
+
+    return res.status(500).json({
+      message: 'Error al autenticar con Google'
+    });
   }
 };
