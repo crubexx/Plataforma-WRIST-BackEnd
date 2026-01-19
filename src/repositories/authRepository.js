@@ -7,7 +7,7 @@ import { pool } from '../config/database.js';
 // Buscar usuario por email
 export const findUserByEmail = async (email) => {
   const [rows] = await pool.query(
-    'SELECT * FROM user WHERE email = ?',
+    'SELECT * FROM User WHERE email = ?',
     [email]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -16,7 +16,7 @@ export const findUserByEmail = async (email) => {
 // Buscar usuario por RUT
 export const findUserByRut = async (rut) => {
   const [rows] = await pool.execute(
-    'SELECT id_user FROM user WHERE rut = ? LIMIT 1',
+    'SELECT id_user FROM User WHERE rut = ? LIMIT 1',
     [rut]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -25,7 +25,7 @@ export const findUserByRut = async (rut) => {
 // Buscar usuario por ID
 export const findUserById = async (userId) => {
   const [rows] = await pool.query(
-    'SELECT * FROM user WHERE id_user = ?',
+    'SELECT * FROM User WHERE id_user = ?',
     [userId]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -46,7 +46,7 @@ export const createUser = async (userData) => {
   } = userData;
 
   const [result] = await pool.query(
-    `INSERT INTO user 
+    `INSERT INTO User 
       (first_name, last_name, rut, email, password_hash, role, gender, date_of_birth, picture, status)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
     [first_name, last_name, rut, email, password_hash, role, gender, date_of_birth, picture]
@@ -58,7 +58,7 @@ export const createUser = async (userData) => {
 // Guardar token de recuperación
 export const saveResetToken = async (email, token, expires) => {
   await pool.query(
-    `UPDATE user 
+    `UPDATE User 
      SET reset_token = ?, reset_token_expires = ?
      WHERE email = ?`,
     [token, expires, email]
@@ -68,7 +68,7 @@ export const saveResetToken = async (email, token, expires) => {
 // Buscar usuario por token de recuperación
 export const findUserByResetToken = async (token) => {
   const [rows] = await pool.query(
-    `SELECT * FROM user 
+    `SELECT * FROM User 
      WHERE reset_token = ? 
      AND reset_token_expires > NOW()`,
     [token]
@@ -79,7 +79,7 @@ export const findUserByResetToken = async (token) => {
 // Actualizar contraseña
 export const updatePassword = async (id_user, password_hash) => {
   await pool.query(
-    `UPDATE user
+    `UPDATE User
      SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL
      WHERE id_user = ?`,
     [password_hash, id_user]
@@ -93,7 +93,7 @@ export const updatePassword = async (id_user, password_hash) => {
 // Buscar provider por tipo y provider_user_id
 export const findAuthProvider = async (provider, providerUserId) => {
   const [rows] = await pool.query(
-    'SELECT * FROM user_auth_providers WHERE provider = ? AND provider_user_id = ?',
+    'SELECT * FROM User_Auth_Providers WHERE provider = ? AND provider_user_id = ?',
     [provider, providerUserId]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -102,7 +102,7 @@ export const findAuthProvider = async (provider, providerUserId) => {
 // Buscar provider por user_id y tipo
 export const findAuthProviderByUser = async (userId, provider) => {
   const [rows] = await pool.query(
-    'SELECT * FROM user_auth_providers WHERE user_id = ? AND provider = ?',
+    'SELECT * FROM User_Auth_Providers WHERE user_id = ? AND provider = ?',
     [userId, provider]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -113,7 +113,7 @@ export const createAuthProvider = async (providerData) => {
   const { user_id, provider, provider_user_id } = providerData;
 
   const [result] = await pool.query(
-    `INSERT INTO user_auth_providers 
+    `INSERT INTO User_Auth_Providers
       (user_id, provider, provider_user_id, last_login)
      VALUES (?, ?, ?, NOW())`,
     [user_id, provider, provider_user_id]
@@ -125,7 +125,7 @@ export const createAuthProvider = async (providerData) => {
 // Actualizar último login de provider
 export const updateAuthProviderLastLogin = async (providerId) => {
   await pool.query(
-    'UPDATE user_auth_providers SET last_login = NOW() WHERE id = ?',
+    'UPDATE User_Auth_Providers SET last_login = NOW() WHERE id = ?',
     [providerId]
   );
 };
@@ -134,8 +134,8 @@ export const updateAuthProviderLastLogin = async (providerId) => {
 export const getUserWithProvider = async (provider, providerUserId) => {
   const [rows] = await pool.query(
     `SELECT u.*, p.id as provider_id, p.provider, p.last_login as provider_last_login
-     FROM user u
-     INNER JOIN user_auth_providers p ON u.id_user = p.user_id
+     FROM User u
+     INNER JOIN User_Auth_Providers p ON u.id_user = p.user_id
      WHERE p.provider = ? AND p.provider_user_id = ?`,
     [provider, providerUserId]
   );
