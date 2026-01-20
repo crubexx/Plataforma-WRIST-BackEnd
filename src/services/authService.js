@@ -169,25 +169,46 @@ export const recoverPassword = async (email) => {
   }
 
   const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+  const expires = new Date(Date.now() + 60 * 60 * 1000);
 
   await saveResetToken(email, token, expires);
 
-  const link = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-  await sendResetPasswordEmail(email, link);
+  const link = `${process.env.FRONTEND_URL}/acceso/restablecer-contrasena?token=${token}`;
+
+  await sendResetPasswordEmail(
+    email,
+    link,
+    user.first_name
+  );
 
   return { message: 'Correo de recuperación enviado' };
 };
 
+
+
 // ACC-004: Resetear contraseña
 export const resetPassword = async (token, newPassword) => {
+  if (!token || !newPassword) {
+    throw new Error('Token y nueva contraseña son obligatorios');
+  }
+
   const user = await findUserByResetToken(token);
 
   if (!user) {
     throw new Error('El enlace es inválido o ha expirado');
   }
 
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
+
+  if (!passwordRegex.test(newPassword)) {
+    throw new Error(
+      'La contraseña debe tener entre 8 y 15 caracteres, incluir mayúscula, minúscula, número y símbolo'
+    );
+  }
+
   const password_hash = await bcrypt.hash(newPassword, 10);
+
   await updatePassword(user.id_user, password_hash);
 
   return { message: 'Contraseña actualizada correctamente' };
