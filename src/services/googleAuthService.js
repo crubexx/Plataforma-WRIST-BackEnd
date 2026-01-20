@@ -105,7 +105,7 @@ export const authenticateWithGoogle = async (idToken) => {
     // 8. Retornar token y usuario
     return {
         token,
-        User: {
+        user: {
             id_user: userWithProvider.id_user,
             first_name: userWithProvider.first_name,
             last_name: userWithProvider.last_name,

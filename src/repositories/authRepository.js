@@ -93,7 +93,7 @@ export const updatePassword = async (id_user, password_hash) => {
 // Buscar provider por tipo y provider_user_id
 export const findAuthProvider = async (provider, providerUserId) => {
   const [rows] = await pool.query(
-    'SELECT * FROM User_Auth_Providers WHERE provider = ? AND provider_user_id = ?',
+    'SELECT * FROM UserAuthProviders WHERE provider = ? AND provider_user_id = ?',
     [provider, providerUserId]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -102,7 +102,7 @@ export const findAuthProvider = async (provider, providerUserId) => {
 // Buscar provider por user_id y tipo
 export const findAuthProviderByUser = async (userId, provider) => {
   const [rows] = await pool.query(
-    'SELECT * FROM User_Auth_Providers WHERE user_id = ? AND provider = ?',
+    'SELECT * FROM UserAuthProviders WHERE user_id = ? AND provider = ?',
     [userId, provider]
   );
   return rows.length > 0 ? rows[0] : null;
@@ -113,7 +113,7 @@ export const createAuthProvider = async (providerData) => {
   const { user_id, provider, provider_user_id } = providerData;
 
   const [result] = await pool.query(
-    `INSERT INTO User_Auth_Providers
+    `INSERT INTO UserAuthProviders
       (user_id, provider, provider_user_id, last_login)
      VALUES (?, ?, ?, NOW())`,
     [user_id, provider, provider_user_id]
@@ -125,7 +125,7 @@ export const createAuthProvider = async (providerData) => {
 // Actualizar último login de provider
 export const updateAuthProviderLastLogin = async (providerId) => {
   await pool.query(
-    'UPDATE User_Auth_Providers SET last_login = NOW() WHERE id = ?',
+    'UPDATE UserAuthProviders SET last_login = NOW() WHERE id = ?',
     [providerId]
   );
 };
@@ -135,7 +135,7 @@ export const getUserWithProvider = async (provider, providerUserId) => {
   const [rows] = await pool.query(
     `SELECT u.*, p.id as provider_id, p.provider, p.last_login as provider_last_login
      FROM User u
-     INNER JOIN User_Auth_Providers p ON u.id_user = p.user_id
+     INNER JOIN UserAuthProviders p ON u.id_user = p.user_id
      WHERE p.provider = ? AND p.provider_user_id = ?`,
     [provider, providerUserId]
   );
