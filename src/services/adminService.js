@@ -1,4 +1,6 @@
-import { getAllUsersRepository } from '../repositories/adminRepository.js';
+import { getAllUsersRepository,
+  deleteUserRepository, findUserByIdAdmin
+ } from '../repositories/adminRepository.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import {
@@ -25,7 +27,7 @@ export const createTeacherService = async (data) => {
     date_of_birth
   } = data;
 
-  // 1️⃣ Campos obligatorios
+  // Campos obligatorios
   if (!first_name) throw new Error('Falta completar el campo Nombre');
   if (!last_name) throw new Error('Falta completar el campo Apellidos');
   if (!rut) throw new Error('Falta completar el campo RUT');
@@ -33,12 +35,12 @@ export const createTeacherService = async (data) => {
   if (!gender) throw new Error('Falta completar el campo Género');
   if (!date_of_birth) throw new Error('Falta completar el campo Edad');
 
-  // 2️⃣ Validaciones nombre
+  // Validaciones nombre
   if (first_name.length < 2 || last_name.length < 2) {
     throw new Error('El nombre y apellidos deben tener al menos 2 caracteres');
   }
 
-  // 3️⃣ Validación RUT formato
+  // Validación RUT formato
   const rutRegex = /^\d{7,8}[0-9Kk]$/;
   if (!rutRegex.test(rut)) {
     throw new Error('El RUT debe ingresarse sin puntos ni guión (ej.: 12456789K)');
@@ -48,12 +50,12 @@ export const createTeacherService = async (data) => {
     throw new Error('El RUT ingresado no es válido');
   }
 
-  // 4️⃣ RUT único
+  // RUT único
   if (await findUserByRut(rut)) {
     throw new Error('El RUT ingresado ya se encuentra registrado');
   }
 
-  // 5️⃣ Email válido
+  // Email válido
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     throw new Error('El correo electrónico no tiene un formato válido');
@@ -63,11 +65,11 @@ export const createTeacherService = async (data) => {
     throw new Error('El correo electrónico ya se encuentra registrado');
   }
 
-  // 6️⃣ Generar contraseña automática
+  // Generar contraseña automática
   const plainPassword = crypto.randomBytes(6).toString('base64') + '!';
   const password_hash = await bcrypt.hash(plainPassword, 10);
 
-  // 7️⃣ Crear usuario DOCENTE
+  // Crear usuario DOCENTE
   const userId = await createUser({
     first_name,
     last_name,
@@ -79,7 +81,7 @@ export const createTeacherService = async (data) => {
     date_of_birth
   });
 
-  // 8️⃣ Enviar correo con credenciales
+  // Enviar correo con credenciales
   await sendTeacherWelcomeEmail(
     email,
     `${first_name} ${last_name}`,
@@ -90,4 +92,39 @@ export const createTeacherService = async (data) => {
     message: 'Docente registrado correctamente',
     userId
   };
+};
+
+// ADM-003: Eliminar usuario
+export const deleteUserService = async (targetUserId, currentUser) => {
+  // Usuario existe
+  const user = await findUserByIdAdmin(targetUserId);
+  if (!user) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  // Ya eliminado
+  if (user.status === 'DELETED') {
+    throw new Error('El usuario ya se encuentra eliminado');
+  }
+
+  // No eliminarse a sí mismo
+  if (user.id_user === currentUser.id_user) {
+    throw new Error('No puedes eliminar tu propia cuenta');
+  }
+
+  // Reglas por rol
+  if (currentUser.role === 'ADMIN') {
+    if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+      throw new Error('No tienes permisos para eliminar este usuario');
+    }
+  }
+
+  // Ejecutar eliminación lógica
+  const affected = await deleteUserRepository(targetUserId);
+
+  if (!affected) {
+    throw new Error('No fue posible eliminar el usuario');
+  }
+
+  return { message: 'Usuario eliminado correctamente' };
 };

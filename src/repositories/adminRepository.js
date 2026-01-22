@@ -1,5 +1,30 @@
 import { pool } from '../config/database.js';
 
+// ADM-003: Eliminar usuario
+export const deleteUserRepository = async (userId) => {
+  const [result] = await pool.query(
+    `UPDATE User
+     SET status = 'DELETED'
+     WHERE id_user = ?`,
+    [userId]
+  );
+
+  return result.affectedRows;
+};
+
+// ADM-003: Buscar usuario para eliminarlo
+export const findUserByIdAdmin = async (userId) => {
+  const [rows] = await pool.query(
+    `SELECT id_user, role, status
+     FROM User
+     WHERE id_user = ?`,
+    [userId]
+  );
+
+  return rows.length ? rows[0] : null;
+};
+
+// ADM-001: Ver todos los usuarios
 export const getAllUsersRepository = async () => {
   const [rows] = await pool.query(`
     SELECT 

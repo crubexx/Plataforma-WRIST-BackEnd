@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllUsers, createTeacher } from '../controllers/adminController.js';
+import { getAllUsers, createTeacher, deleteUser } from '../controllers/adminController.js';
 import { authenticateToken, authorizeAdmin } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/adminMiddleware.js';
 
@@ -19,6 +19,14 @@ router.post(
   authenticateToken,
   authorizeAdmin,
   createTeacher
+);
+
+// ADM-003: Eliminar usuario
+router.delete(
+  '/users/:id',
+  authenticateToken,
+  authorizeAdmin,
+  deleteUser
 );
 
 export default router;
