@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getAllUsers } from '../controllers/adminController.js';
-import { authenticateToken } from '../middlewares/authMiddleware.js';
+import { getAllUsers, createTeacher } from '../controllers/adminController.js';
+import { authenticateToken, authorizeAdmin } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/adminMiddleware.js';
 
 const router = Router();
@@ -11,6 +11,14 @@ router.get(
   authenticateToken,
   authorizeRoles('ADMIN', 'SUPERADMIN'),
   getAllUsers
+);
+
+// ADM-002: Registrar docente
+router.post(
+  '/teachers',
+  authenticateToken,
+  authorizeAdmin,
+  createTeacher
 );
 
 export default router;
