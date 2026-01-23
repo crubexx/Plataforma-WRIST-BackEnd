@@ -1,5 +1,6 @@
 import { getAllUsersService, deleteUserService, 
-  createTeacherService, editUserService } from '../services/adminService.js';
+  createTeacherService, editUserService,
+getAllExperiencesService } from '../services/adminService.js';
 
 // ADM-001: Ver todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -54,3 +55,15 @@ export const editUser = async (req, res) => {
   }
 };
 
+// ADM-006: Historial de experiencias
+export const getAllExperiences = async (req, res) => {
+  try {
+    const experiences = await getAllExperiencesService();
+    return res.status(200).json(experiences);
+  } catch (error) {
+    console.error('Error ADM-006:', error);
+    return res.status(500).json({
+      message: 'Error al obtener historial de experiencias'
+    });
+  }
+};

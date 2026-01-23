@@ -1,6 +1,7 @@
 import { getAllUsersRepository,
   deleteUserRepository, findUserByIdAdmin,
-  updateUserRepository, findUserById
+  updateUserRepository, findUserById,
+  getAllExperiencesRepository
  } from '../repositories/adminRepository.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -194,4 +195,9 @@ export const editUserService = async (userId, data, admin) => {
   });
 
   return { message: 'Usuario actualizado correctamente' };
+};
+
+// ADM-006
+export const getAllExperiencesService = async () => {
+  return await getAllExperiencesRepository();
 };

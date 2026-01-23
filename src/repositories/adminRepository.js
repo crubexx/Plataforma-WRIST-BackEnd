@@ -82,3 +82,23 @@ export const updateUserRepository = async (id, data) => {
     values
   );
 };
+
+// ADM-006: Ver historial de experiencias
+export const getAllExperiencesRepository = async () => {
+  const [rows] = await pool.query(`
+    SELECT
+      e.id_experimento,
+      e.nombre,
+      e.descripcion,
+      e.estado,
+      e.fecha_inicio,
+      e.fecha_fin,
+      CONCAT(u.nombre, ' ', u.apellido) AS responsable,
+      u.rol AS rol_responsable
+    FROM Experimento e
+    INNER JOIN Usuario u ON e.id_usuario = u.id_usuario
+    ORDER BY e.fecha_inicio DESC
+  `);
+
+  return rows;
+};

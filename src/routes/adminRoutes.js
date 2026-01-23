@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllUsers, createTeacher, deleteUser, editUser } from '../controllers/adminController.js';
+import { getAllUsers, createTeacher, deleteUser, editUser, getAllExperiences } from '../controllers/adminController.js';
 import { authenticateToken, authorizeAdmin } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/adminMiddleware.js';
 
@@ -35,6 +35,14 @@ router.put(
   authenticateToken,
   authorizeAdmin,
   editUser
+);
+
+// ADM-006: Ver experiencias
+router.get(
+  '/experiences',
+  authenticateToken,
+  authorizeAdmin,
+  getAllExperiences
 );
 
 export default router;
