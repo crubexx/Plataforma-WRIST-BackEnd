@@ -1,5 +1,5 @@
-import { getAllUsersService, deleteUserService } from '../services/adminService.js';
-import { createTeacherService } from '../services/adminService.js';
+import { getAllUsersService, deleteUserService, 
+  createTeacherService, editUserService } from '../services/adminService.js';
 
 // ADM-001: Ver todos los usuarios
 export const getAllUsers = async (req, res) => {
@@ -41,3 +41,16 @@ export const deleteUser = async (req, res) => {
     });
   }
 };
+
+// ADM-004 / ADM-005: Editar usuario y estado
+export const editUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const admin = req.user; // viene del token
+    const result = await editUserService(userId, req.body, admin);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+

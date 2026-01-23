@@ -21,6 +21,11 @@ export const login = async (req, res) => {
       });
     }
 
+    if (user.status !== 'ACTIVE') {
+  throw new Error('La cuenta no se encuentra activa');
+}
+
+
     return res.status(200).json(user);
   } catch (error) {
     return res.status(500).json({

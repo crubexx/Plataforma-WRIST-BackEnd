@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllUsers, createTeacher, deleteUser } from '../controllers/adminController.js';
+import { getAllUsers, createTeacher, deleteUser, editUser } from '../controllers/adminController.js';
 import { authenticateToken, authorizeAdmin } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/adminMiddleware.js';
 
@@ -27,6 +27,14 @@ router.delete(
   authenticateToken,
   authorizeAdmin,
   deleteUser
+);
+
+// ADM-004 / ADM-005: Editar usuario y estado
+router.put(
+  '/users/:id',
+  authenticateToken,
+  authorizeAdmin,
+  editUser
 );
 
 export default router;

@@ -36,11 +36,11 @@ export const getAllUsersRepository = async () => {
       status
     FROM User
     WHERE role != 'SUPERADMIN'
+    AND status <> 'DELETED'
     ORDER BY
       CASE status
         WHEN 'ACTIVE' THEN 1
         WHEN 'BLOCKED' THEN 2
-        WHEN 'DELETED' THEN 3
       END,
       CASE role
         WHEN 'DOCENTE' THEN 1
@@ -51,4 +51,34 @@ export const getAllUsersRepository = async () => {
   `);
 
   return rows;
+};
+
+// ADM-004 / ADM-005: Editar usuario y estado
+export const findUserById = async (id) => {
+  const [rows] = await pool.query(
+    'SELECT * FROM User WHERE id_user = ?',
+    [id]
+  );
+  return rows[0];
+};
+
+export const updateUserRepository = async (id, data) => {
+  const fields = [];
+  const values = [];
+
+  for (const key in data) {
+    if (data[key] !== undefined) {
+      fields.push(`${key} = ?`);
+      values.push(data[key]);
+    }
+  }
+
+  if (!fields.length) return;
+
+  values.push(id);
+
+  await pool.query(
+    `UPDATE User SET ${fields.join(', ')} WHERE id_user = ?`,
+    values
+  );
 };

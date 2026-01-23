@@ -1,5 +1,6 @@
 import { getAllUsersRepository,
-  deleteUserRepository, findUserByIdAdmin
+  deleteUserRepository, findUserByIdAdmin,
+  updateUserRepository, findUserById
  } from '../repositories/adminRepository.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -127,4 +128,70 @@ export const deleteUserService = async (targetUserId, currentUser) => {
   }
 
   return { message: 'Usuario eliminado correctamente' };
+};
+
+// ADM-004 / ADM-005: Editar usuario y estado
+export const editUserService = async (userId, data, admin) => {
+  const {
+    first_name,
+    last_name,
+    email,
+    role,
+    status
+  } = data;
+
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  // No se edita SUPERADMIN
+  if (user.role === 'SUPERADMIN') {
+    throw new Error('No se puede editar un SuperAdmin');
+  }
+
+  // Admin no puede editar a otro admin
+  if (
+    admin.role === 'ADMIN' &&
+    user.role === 'ADMIN'
+  ) {
+    throw new Error('No tienes permisos para editar a otro administrador');
+  }
+
+  // Validaciones
+  if (first_name && first_name.length < 2) {
+    throw new Error('El nombre debe tener al menos 2 caracteres');
+  }
+
+  if (last_name && last_name.length < 2) {
+    throw new Error('El apellido debe tener al menos 2 caracteres');
+  }
+
+  if (email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error('El correo electrónico no tiene un formato válido');
+    }
+  }
+
+  const validRoles = ['USUARIO', 'DOCENTE', 'ADMIN'];
+  if (role && !validRoles.includes(role)) {
+    throw new Error('Rol no válido');
+  }
+
+  const validStatus = ['ACTIVE', 'BLOCKED', 'DELETED'];
+  if (status && !validStatus.includes(status)) {
+    throw new Error('Estado no válido');
+  }
+
+  await updateUserRepository(userId, {
+    first_name,
+    last_name,
+    email,
+    role,
+    status
+  });
+
+  return { message: 'Usuario actualizado correctamente' };
 };
