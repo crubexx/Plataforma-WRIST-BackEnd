@@ -83,6 +83,7 @@ export const updateUserRepository = async (id, data) => {
   );
 };
 
+// CAMBIAR NOMBRES BDD DEL LAB
 // ADM-006: Ver historial de experiencias
 export const getAllExperiencesRepository = async () => {
   const [rows] = await pool.query(`
@@ -93,10 +94,10 @@ export const getAllExperiencesRepository = async () => {
       e.estado,
       e.fecha_inicio,
       e.fecha_fin,
-      CONCAT(u.nombre, ' ', u.apellido) AS responsable,
-      u.rol AS rol_responsable
+      CONCAT(u.first_name, ' ', u.last_name) AS responsable,
+      u.role AS rol_responsable
     FROM Experimento e
-    INNER JOIN Usuario u ON e.id_usuario = u.id_usuario
+    INNER JOIN User u ON e.id_user = u.id_user
     ORDER BY e.fecha_inicio DESC
   `);
 
