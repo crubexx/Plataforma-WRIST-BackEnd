@@ -92,12 +92,12 @@ export const updateUserRepository = async (id, data) => {
 export const getAllExperiencesRepository = async () => {
   const [rows] = await pool.query(`
     SELECT
-      e.id_experimento,
-      e.nombre,
-      e.descripcion,
-      e.estado,
-      e.fecha_inicio,
-      e.fecha_fin,
+      e.id_experiment,
+      e.name,
+      e.description,
+      e.status,
+      e.start_date,
+      e.end_date,
       CONCAT(u.first_name, ' ', u.last_name) AS responsable,
       u.role AS rol_responsable
     FROM Experimento e

@@ -1,5 +1,83 @@
 import nodemailer from 'nodemailer';
 
+export const sendAdminWelcomeEmail = async (to, nombre, password) => {
+  if (!to) {
+    throw new Error('Correo del admin no definido');
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cuenta Admin creada - WRIST</title>
+</head>
+<body style="font-family: Arial; background:#f2f2f2; padding:20px;">
+  <table width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:10px;">
+    <tr>
+      <td style="background:#023859;color:#fff;padding:30px;text-align:center;">
+        <h1>WRIST</h1>
+        <p>Cuenta Admin creada</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding:30px;">
+        <p>Hola <strong>${nombre}</strong>,</p>
+
+        <p>
+          Un administrador ha creado una cuenta de <strong>admin</strong>
+          para ti en la plataforma WRIST.
+        </p>
+
+        <p><strong>Credenciales de acceso:</strong></p>
+        <ul>
+          <li><strong>Correo:</strong> ${to}</li>
+          <li><strong>Contraseña:</strong> ${password}</li>
+        </ul>
+
+        <p>
+          Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.
+        </p>
+
+        <p style="text-align:center;margin-top:30px;">
+          <a href="${process.env.FRONTEND_URL}/acceso/login"
+             style="background:#F28F16;color:#fff;padding:12px 25px;
+                    border-radius:6px;text-decoration:none;">
+            Iniciar sesión
+          </a>
+        </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="text-align:center;padding:20px;color:#999;font-size:12px;">
+        © 2026 WRIST - Universidad Católica del Norte
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject: 'Cuenta Admin creada - WRIST',
+    html
+  });
+};
+
 export const sendTeacherWelcomeEmail = async (to, nombre, password) => {
   if (!to) {
     throw new Error('Correo del docente no definido');
