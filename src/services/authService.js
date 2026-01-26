@@ -115,11 +115,11 @@ export const registerUser = async (data) => {
 
   // 8. Reglas de contraseña (ERS)
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/;
 
   if (!passwordRegex.test(password)) {
     throw new Error(
-      'La contraseña debe tener entre 8 y 15 caracteres, incluir mayúscula, minúscula, número y símbolo'
+      'La contraseña debe tener entre 8 y 30 caracteres, incluir mayúscula, minúscula, número y símbolo'
     );
   }
 
@@ -199,11 +199,11 @@ export const resetPassword = async (token, newPassword) => {
   }
 
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/;
 
   if (!passwordRegex.test(newPassword)) {
     throw new Error(
-      'La contraseña debe tener entre 8 y 15 caracteres, incluir mayúscula, minúscula, número y símbolo'
+      'La contraseña debe tener entre 8 y 30 caracteres, incluir mayúscula, minúscula, número y símbolo'
     );
   }
 

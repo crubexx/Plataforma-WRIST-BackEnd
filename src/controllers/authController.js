@@ -13,23 +13,27 @@ export const login = async (req, res) => {
   }
 
   try {
-    const user = await loginUser(email, password);
+    const result = await loginUser(email, password);
 
-    if (!user) {
+    if (!result) {
       return res.status(401).json({
         message: 'Correo o contraseña incorrectos'
       });
     }
 
-    if (user.status !== 'ACTIVE') {
-  throw new Error('La cuenta no se encuentra activa');
-}
-
-
-    return res.status(200).json(user);
+    return res.status(200).json(result);
   } catch (error) {
+    console.error('Login error:', error.message);
+
+    if (error.message.includes('cuenta no se encuentra activa')) {
+      return res.status(403).json({
+        message: error.message
+      });
+    }
+
     return res.status(500).json({
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };

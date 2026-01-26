@@ -1,8 +1,9 @@
-import { getAllUsersRepository,
+import {
+  getAllUsersRepository,
   deleteUserRepository, findUserByIdAdmin,
   updateUserRepository, findUserById,
   getAllExperiencesRepository
- } from '../repositories/adminRepository.js';
+} from '../repositories/adminRepository.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import {
@@ -105,7 +106,7 @@ export const deleteUserService = async (targetUserId, currentUser) => {
   }
 
   // Ya eliminado
-  if (user.status === 'DELETED') {
+  if (user.status === 'SUSPENDED') {
     throw new Error('El usuario ya se encuentra eliminado');
   }
 
@@ -138,7 +139,10 @@ export const editUserService = async (userId, data, admin) => {
     last_name,
     email,
     role,
-    status
+    status,
+    rut,
+    gender,
+    date_of_birth
   } = data;
 
   const user = await findUserById(userId);
@@ -155,7 +159,8 @@ export const editUserService = async (userId, data, admin) => {
   // Admin no puede editar a otro admin
   if (
     admin.role === 'ADMIN' &&
-    user.role === 'ADMIN'
+    user.role === 'ADMIN' &&
+    Number(userId) !== Number(admin.id_user)
   ) {
     throw new Error('No tienes permisos para editar a otro administrador');
   }
@@ -176,12 +181,22 @@ export const editUserService = async (userId, data, admin) => {
     }
   }
 
+  if (rut) {
+    const rutRegex = /^\d{7,8}[0-9Kk]$/;
+    if (!rutRegex.test(rut)) {
+      throw new Error('El RUT debe ingresarse sin puntos ni guión (ej.: 12456789K)');
+    }
+    if (!isValidRut(rut)) {
+      throw new Error('El RUT ingresado no es válido');
+    }
+  }
+
   const validRoles = ['USUARIO', 'DOCENTE', 'ADMIN'];
   if (role && !validRoles.includes(role)) {
     throw new Error('Rol no válido');
   }
 
-  const validStatus = ['ACTIVE', 'BLOCKED', 'DELETED'];
+  const validStatus = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
   if (status && !validStatus.includes(status)) {
     throw new Error('Estado no válido');
   }
@@ -191,7 +206,10 @@ export const editUserService = async (userId, data, admin) => {
     last_name,
     email,
     role,
-    status
+    status,
+    rut,
+    gender,
+    date_of_birth
   });
 
   return { message: 'Usuario actualizado correctamente' };

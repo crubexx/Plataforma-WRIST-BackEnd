@@ -4,7 +4,7 @@ import { pool } from '../config/database.js';
 export const deleteUserRepository = async (userId) => {
   const [result] = await pool.query(
     `UPDATE User
-     SET status = 'DELETED'
+     SET status = 'SUSPENDED'
      WHERE id_user = ?`,
     [userId]
   );
@@ -28,15 +28,19 @@ export const findUserByIdAdmin = async (userId) => {
 export const getAllUsersRepository = async () => {
   const [rows] = await pool.query(`
     SELECT 
+      id_user,
       first_name,
       last_name,
       rut,
       email,
       role,
-      status
+      status,
+      gender,
+      date_of_birth,
+      picture
     FROM User
     WHERE role != 'SUPERADMIN'
-    AND status <> 'DELETED'
+    AND status <> 'SUSPENDED'
     ORDER BY
       CASE status
         WHEN 'ACTIVE' THEN 1
