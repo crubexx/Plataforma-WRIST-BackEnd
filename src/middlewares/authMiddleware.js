@@ -43,3 +43,12 @@ export const authorizeSuperAdmin = (req, res, next) => {
     }
     next();
   };
+
+  export const authorizeTeacher = (req, res, next) => {
+  if (!req.user || req.user.role !== 'DOCENTE') {
+    return res.status(403).json({
+      message: 'Acceso denegado: solo docentes'
+    });
+  }
+  next();
+};
