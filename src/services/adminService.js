@@ -2,7 +2,8 @@ import {
   getAllUsersRepository,
   deleteUserRepository, findUserByIdAdmin,
   updateUserRepository, findUserById,
-  getAllExperiencesRepository
+  getAllExperiencesRepository,
+  getSuspendedUsersRepository
 } from '../repositories/adminRepository.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -11,7 +12,7 @@ import {
   findUserByEmail,
   createUser
 } from '../repositories/authRepository.js';
-import { sendTeacherWelcomeEmail } from '../utils/mailService.js';
+import { sendTeacherWelcomeEmail, sendAdminWelcomeEmail } from '../utils/mailService.js';
 import { isValidRut } from '../utils/rutValidator.js';
 
 // ADM-001: Ver todos los usuarios
@@ -296,4 +297,31 @@ export const createAdminService = async (data) => {
     message: 'Admin registrado correctamente',
     userId
   };
+};
+
+// SADM-001: Ver usuarios suspendidos (SuperAdmin)
+export const getSuspendedUsersService = async () => {
+  return await getSuspendedUsersRepository();
+};
+
+// SADM-002: Restaurar usuario suspendido (SuperAdmin)
+export const restoreSuspendedUserService = async (userId) => {
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  if (user.status !== 'SUSPENDED') {
+    throw new Error('El usuario no está suspendido');
+  }
+
+  // No se puede restaurar un SUPERADMIN
+  if (user.role === 'SUPERADMIN') {
+    throw new Error('No se puede restaurar un SuperAdmin');
+  }
+
+  await updateUserRepository(userId, { status: 'ACTIVE' });
+
+  return { message: 'Usuario restaurado correctamente' };
 };

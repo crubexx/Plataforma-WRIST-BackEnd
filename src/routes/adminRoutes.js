@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllUsers, createTeacher, deleteUser, editUser, getAllExperiences, createAdmin } from '../controllers/adminController.js';
+import { getAllUsers, createTeacher, deleteUser, editUser, getAllExperiences, createAdmin, getSuspendedUsers, restoreSuspendedUser } from '../controllers/adminController.js';
 import { authenticateToken, authorizeAdmin, authorizeSuperAdmin } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/adminMiddleware.js';
 
@@ -51,6 +51,22 @@ router.post(
   authenticateToken,
   authorizeSuperAdmin,
   createAdmin
+);
+
+//  Ver usuarios suspendidos (SuperAdmin)
+router.get(
+  '/suspended-users',
+  authenticateToken,
+  authorizeSuperAdmin,
+  getSuspendedUsers
+);
+
+//  Restaurar usuario suspendido (SuperAdmin)
+router.patch(
+  '/suspended-users/:id/restore',
+  authenticateToken,
+  authorizeSuperAdmin,
+  restoreSuspendedUser
 );
 
 export default router;

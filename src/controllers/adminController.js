@@ -1,7 +1,8 @@
 import {
   getAllUsersService, deleteUserService,
   createTeacherService, editUserService,
-  getAllExperiencesService, createAdminService
+  getAllExperiencesService, createAdminService,
+  getSuspendedUsersService, restoreSuspendedUserService
 } from '../services/adminService.js';
 
 // ADM-001: Ver todos los usuarios
@@ -75,6 +76,30 @@ export const createAdmin = async (req, res) => {
   try {
     const result = await createAdminService(req.body);
     return res.status(201).json(result);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// Ver usuarios suspendidos (SuperAdmin)
+export const getSuspendedUsers = async (req, res) => {
+  try {
+    const users = await getSuspendedUsersService();
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('Error SADM-001:', error);
+    return res.status(500).json({
+      message: 'Error al obtener usuarios suspendidos'
+    });
+  }
+};
+
+// Restaurar usuario suspendido (SuperAdmin)
+export const restoreSuspendedUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await restoreSuspendedUserService(Number(id));
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }

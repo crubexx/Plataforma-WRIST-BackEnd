@@ -55,7 +55,7 @@ const migrateUserTable = async () => {
         rut VARCHAR(12) UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255),
-        role ENUM('ADMIN','DOCENTE','USUARIO') NOT NULL DEFAULT 'USUARIO',
+        role ENUM('SUPERADMIN','ADMIN','DOCENTE','USUARIO') NOT NULL DEFAULT 'USUARIO',
         gender ENUM('Masculino','Femenino','Otro'),
         date_of_birth DATE,
         status ENUM('ACTIVE','INACTIVE','SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
@@ -71,42 +71,60 @@ const migrateUserTable = async () => {
 
     console.log('✅ Tabla User creada');
   } else {
-  console.log('✓ Tabla User ya existe, verificando columnas...');
+    console.log('✓ Tabla User ya existe, verificando columnas...');
 
-  const [columns] = await pool.query(`
+    const [columns] = await pool.query(`
     SELECT COLUMN_NAME 
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = 'DBProductAPP'
       AND TABLE_NAME = 'User'
   `);
 
-  const existingColumns = columns.map(c => c.COLUMN_NAME);
+    const existingColumns = columns.map(c => c.COLUMN_NAME);
 
-  const alterQueries = [];
+    const alterQueries = [];
 
-  if (!existingColumns.includes('reset_token')) {
-    alterQueries.push(`ADD COLUMN reset_token VARCHAR(255)`);
-  }
+    if (!existingColumns.includes('reset_token')) {
+      alterQueries.push(`ADD COLUMN reset_token VARCHAR(255)`);
+    }
 
-  if (!existingColumns.includes('reset_token_expires')) {
-    alterQueries.push(`ADD COLUMN reset_token_expires DATETIME`);
-  }
+    if (!existingColumns.includes('reset_token_expires')) {
+      alterQueries.push(`ADD COLUMN reset_token_expires DATETIME`);
+    }
 
-  if (!existingColumns.includes('picture')) {
-    alterQueries.push(`ADD COLUMN picture VARCHAR(500)`);
-  }
+    if (!existingColumns.includes('picture')) {
+      alterQueries.push(`ADD COLUMN picture VARCHAR(500)`);
+    }
 
-  if (alterQueries.length > 0) {
-    await pool.query(`
+    if (alterQueries.length > 0) {
+      await pool.query(`
       ALTER TABLE User
       ${alterQueries.join(',')}
     `);
 
-    console.log('✓ Columnas faltantes agregadas a User');
-  } else {
-    console.log('✓ Tabla User ya está actualizada');
+      console.log('✓ Columnas faltantes agregadas a User');
+    }
+
+    // Verificar y actualizar ENUM de role si es necesario
+    const [roleColumn] = await pool.query(`
+    SELECT COLUMN_TYPE 
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'User'
+      AND COLUMN_NAME = 'role'
+  `);
+
+    if (roleColumn.length > 0 && !roleColumn[0].COLUMN_TYPE.includes('SUPERADMIN')) {
+      console.log('🔄 Actualizando ENUM de roles para incluir SUPERADMIN...');
+      await pool.query(`
+      ALTER TABLE User 
+      MODIFY COLUMN role ENUM('SUPERADMIN','ADMIN','DOCENTE','USUARIO') NOT NULL DEFAULT 'USUARIO'
+    `);
+      console.log('✅ ENUM de roles actualizado');
+    } else {
+      console.log('✓ Tabla User ya está actualizada');
+    }
   }
-}
 };
 
 /**

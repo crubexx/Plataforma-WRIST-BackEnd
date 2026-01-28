@@ -57,6 +57,29 @@ export const getAllUsersRepository = async () => {
   return rows;
 };
 
+// Ver usuarios suspendidos (SuperAdmin)
+export const getSuspendedUsersRepository = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      id_user,
+      first_name,
+      last_name,
+      rut,
+      email,
+      role,
+      status,
+      gender,
+      date_of_birth,
+      picture,
+      registration_date
+    FROM User
+    WHERE status = 'SUSPENDED'
+    ORDER BY registration_date DESC
+  `);
+
+  return rows;
+};
+
 // ADM-004 / ADM-005: Editar usuario y estado
 export const findUserById = async (id) => {
   const [rows] = await pool.query(
