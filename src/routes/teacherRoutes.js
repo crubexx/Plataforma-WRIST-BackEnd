@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createExperience } from '../controllers/teacherController.js';
+import { createExperience, getTeacherExperiences } from '../controllers/teacherController.js';
 import {
   authenticateToken,
   authorizeTeacher
@@ -13,6 +13,14 @@ router.post(
   authenticateToken,
   authorizeTeacher,
   createExperience
+);
+
+// DOE-002: Ver historial de experiencias del docente
+router.get(
+  '/experiences',
+  authenticateToken,
+  authorizeTeacher,
+  getTeacherExperiences
 );
 
 export default router;

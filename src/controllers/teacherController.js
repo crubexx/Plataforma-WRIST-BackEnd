@@ -1,4 +1,4 @@
-import { createExperienceService } from '../services/teacherService.js';
+import { createExperienceService, getTeacherExperiencesService } from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
 export const createExperience = async (req, res) => {
@@ -8,6 +8,22 @@ export const createExperience = async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: error.message
+    });
+  }
+};
+
+// DOE-002: Ver historial de experiencias del docente
+export const getTeacherExperiences = async (req, res) => {
+  try {
+    const teacherId = req.user.id_user;
+
+    const experiences = await getTeacherExperiencesService(teacherId);
+
+    return res.status(200).json(experiences);
+  } catch (error) {
+    console.error('Error DOE-002:', error);
+    return res.status(500).json({
+      message: 'Error al obtener historial de experiencias'
     });
   }
 };

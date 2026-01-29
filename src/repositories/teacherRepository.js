@@ -17,3 +17,22 @@ export const createExperienceRepository = async ({
 
   return result.insertId;
 };
+
+// DOE-002: Obtener experiencias del docente logueado
+export const getTeacherExperiencesRepository = async (teacherId) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+      id_experiment,
+      name,
+      status,
+      created_at
+    FROM Experimento
+    WHERE id_user = ?
+    ORDER BY created_at DESC
+    `,
+    [teacherId]
+  );
+
+  return rows;
+};

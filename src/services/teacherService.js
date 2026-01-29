@@ -1,4 +1,4 @@
-import { createExperienceRepository } from '../repositories/teacherRepository.js';
+import { createExperienceRepository, getTeacherExperiencesRepository } from '../repositories/teacherRepository.js';
 
 export const createExperienceService = async (data, user) => {
   const { name, description } = data;
@@ -21,4 +21,9 @@ export const createExperienceService = async (data, user) => {
     message: 'Experiencia creada correctamente',
     experienceId
   };
+};
+
+// DOE-002: Ver historial de experiencias del docente
+export const getTeacherExperiencesService = async (teacherId) => {
+  return await getTeacherExperiencesRepository(teacherId);
 };
