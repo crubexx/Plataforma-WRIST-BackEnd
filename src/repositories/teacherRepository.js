@@ -36,3 +36,18 @@ export const getTeacherExperiencesRepository = async (teacherId) => {
 
   return rows;
 };
+
+// DOE-003: Usuarios conectados actualmente
+export const getConnectedUsersRepository = async () => {
+  const [rows] = await pool.query(`
+    SELECT DISTINCT
+      u.first_name,
+      u.last_name
+    FROM UserSession s
+    INNER JOIN User u ON u.id_user = s.id_user
+    WHERE s.is_active = TRUE
+      AND u.role = 'USUARIO'
+  `);
+
+  return rows;
+};

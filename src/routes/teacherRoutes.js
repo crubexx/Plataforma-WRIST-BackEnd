@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createExperience, getTeacherExperiences } from '../controllers/teacherController.js';
+import { createExperience, getTeacherExperiences, getConnectedUsers } from '../controllers/teacherController.js';
 import {
   authenticateToken,
   authorizeTeacher
@@ -22,5 +22,14 @@ router.get(
   authorizeTeacher,
   getTeacherExperiences
 );
+
+// DOE-003: Ver usuarios conectados
+router.get(
+  '/connected-users',
+  authenticateToken,
+  authorizeTeacher,
+  getConnectedUsers
+);
+
 
 export default router;

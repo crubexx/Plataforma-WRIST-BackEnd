@@ -1,4 +1,4 @@
-import { loginUser, registerUser, recoverPassword, resetPassword } from '../services/authService.js';
+import { loginUser, registerUser, recoverPassword, resetPassword, logoutUserService } from '../services/authService.js';
 import { authenticateWithGoogle } from '../services/googleAuthService.js';
 
 
@@ -52,9 +52,18 @@ export const register = async (req, res) => {
 
 // ACC-003: Cerrar Sesión
 export const logout = async (req, res) => {
-  return res.status(200).json({
-    message: 'Sesión cerrada correctamente'
-  });
+  try {
+    await logoutUserService(req.user.id_user);
+
+    return res.status(200).json({
+      message: 'Sesión cerrada correctamente'
+    });
+  } catch (error) {
+    console.error('Error logout:', error);
+    return res.status(500).json({
+      message: 'Error al cerrar sesión'
+    });
+  }
 };
 
 // ACC-004: Cambiar contraseña

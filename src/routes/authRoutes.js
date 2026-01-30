@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { login, register, logout, recover, reset, googleAuth } from '../controllers/authController.js';
+import { authenticateToken } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
@@ -10,7 +11,7 @@ router.post('/login', login);
 router.post('/register', register);
 
 // ACC-003: Cerrar Sesión
-router.post('/logout', logout);
+router.post('/logout', authenticateToken, logout);
 
 // ACC-004: Cambiar contraseña
 router.post('/recover-password', recover);

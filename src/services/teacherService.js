@@ -1,4 +1,4 @@
-import { createExperienceRepository, getTeacherExperiencesRepository } from '../repositories/teacherRepository.js';
+import { createExperienceRepository, getTeacherExperiencesRepository, getConnectedUsersRepository } from '../repositories/teacherRepository.js';
 
 export const createExperienceService = async (data, user) => {
   const { name, description } = data;
@@ -26,4 +26,9 @@ export const createExperienceService = async (data, user) => {
 // DOE-002: Ver historial de experiencias del docente
 export const getTeacherExperiencesService = async (teacherId) => {
   return await getTeacherExperiencesRepository(teacherId);
+};
+
+// DOE-003: Ver usuarios conectados
+export const getConnectedUsersService = async () => {
+  return await getConnectedUsersRepository();
 };
