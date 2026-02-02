@@ -51,3 +51,36 @@ export const getConnectedUsersRepository = async () => {
 
   return rows;
 };
+
+// DOE-004: Crear equipos
+// Validar experiencia del docente
+export const findExperimentByIdAndTeacher = async (
+  experimentId,
+  teacherId
+) => {
+  const [rows] = await pool.query(
+    `
+    SELECT id_experiment
+    FROM Experiment
+    WHERE id_experiment = ?
+      AND created_by = ?
+      AND status = 'ACTIVE'
+    `,
+    [experimentId, teacherId]
+  );
+
+  return rows[0];
+};
+
+// Crear equipo
+export const createGroupRepository = async ({ name, id_experiment }) => {
+  const [result] = await pool.query(
+    `
+    INSERT INTO \`Group\` (name, is_active, id_experiment)
+    VALUES (?, true, ?)
+    `,
+    [name, id_experiment]
+  );
+
+  return result.insertId;
+};

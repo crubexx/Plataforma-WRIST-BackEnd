@@ -1,4 +1,4 @@
-import { createExperienceRepository, getTeacherExperiencesRepository, getConnectedUsersRepository } from '../repositories/teacherRepository.js';
+import { createExperienceRepository, getTeacherExperiencesRepository, getConnectedUsersRepository, findExperimentByIdAndTeacher, createGroupRepository } from '../repositories/teacherRepository.js';
 
 export const createExperienceService = async (data, user) => {
   const { name, description } = data;
@@ -31,4 +31,39 @@ export const getTeacherExperiencesService = async (teacherId) => {
 // DOE-003: Ver usuarios conectados
 export const getConnectedUsersService = async () => {
   return await getConnectedUsersRepository();
+};
+
+// DOE-004: Crear equipos
+export const createGroupService = async (teacherId, data) => {
+  const { name, id_experiment } = data;
+
+  if (!name) {
+    throw new Error('Falta completar el campo Nombre del equipo');
+  }
+
+  if (!id_experiment) {
+    throw new Error('Falta seleccionar la experiencia');
+  }
+
+  // Validar experiencia del docente
+  const experiment = await findExperimentByIdAndTeacher(
+    id_experiment,
+    teacherId
+  );
+
+  if (!experiment) {
+    throw new Error(
+      'La experiencia no existe o no pertenece al docente'
+    );
+  }
+
+  const groupId = await createGroupRepository({
+    name,
+    id_experiment
+  });
+
+  return {
+    message: 'Equipo creado correctamente',
+    groupId
+  };
 };

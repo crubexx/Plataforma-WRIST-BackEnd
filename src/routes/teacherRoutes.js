@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createExperience, getTeacherExperiences, getConnectedUsers } from '../controllers/teacherController.js';
+import { createExperience, getTeacherExperiences, getConnectedUsers, createGroup } from '../controllers/teacherController.js';
 import {
   authenticateToken,
   authorizeTeacher
@@ -31,5 +31,12 @@ router.get(
   getConnectedUsers
 );
 
+// DOE-004: Crear equipos
+router.post(
+  '/groups',
+  authenticateToken,
+  authorizeTeacher,
+  createGroup
+);
 
 export default router;
