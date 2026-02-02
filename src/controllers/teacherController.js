@@ -1,4 +1,4 @@
-import { createExperienceService, getTeacherExperiencesService, getConnectedUsersService, createGroupService } from '../services/teacherService.js';
+import { createExperienceService, getTeacherExperiencesService, getConnectedUsersService, createGroupService, assignDeviceService } from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
 export const createExperience = async (req, res) => {
@@ -55,6 +55,22 @@ export const createGroup = async (req, res) => {
       req.user.id_user,
       req.body
     );
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// DOC-005
+export const assignDevice = async (req, res) => {
+  try {
+    const result = await assignDeviceService(
+      req.user.id_user,
+      req.body
+    );
+
     return res.status(201).json(result);
   } catch (error) {
     return res.status(400).json({

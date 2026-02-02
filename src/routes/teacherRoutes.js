@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createExperience, getTeacherExperiences, getConnectedUsers, createGroup } from '../controllers/teacherController.js';
+import { createExperience, getTeacherExperiences, getConnectedUsers, createGroup, assignDevice } from '../controllers/teacherController.js';
 import {
   authenticateToken,
   authorizeTeacher
@@ -37,6 +37,14 @@ router.post(
   authenticateToken,
   authorizeTeacher,
   createGroup
+);
+
+// DOE-005: Agregar dispositivo
+router.post(
+  '/devices',
+  authenticateToken,
+  authorizeTeacher,
+  assignDevice
 );
 
 export default router;
