@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { sendResetPasswordEmail } from '../utils/mailService.js';
 import { findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
 import { isValidRut } from '../utils/rutValidator.js';
-import { registerUserSession, deactivateUserSession } from '../repositories/sessionRepository.js';
+//import { registerUserSession, deactivateUserSession } from '../repositories/sessionRepository.js';
 
 // ACC-001: Inicio de Sesión 
 export const loginUser = async (email, password) => {
@@ -43,17 +43,22 @@ export const loginUser = async (email, password) => {
   });
 
   // 6. Registrar sesión activa del usuario
-await registerUserSession(user.id_user);
+  //await registerUserSession(user.id_user);
 
   // 7. Retornar token y usuario
   return {
     token,
     user: {
-      id_user: user.id_user,
-      first_name: user.first_name,
-      last_name: user.last_name,
+      id: user.id_user.toString(),
+      name: user.first_name,
+      lastName: user.last_name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      state: user.status.toLowerCase(),
+      rut: user.rut,
+      gender: user.gender,
+      birthdate: user.date_of_birth,
+      authMethod: 'email'
     }
   };
 };

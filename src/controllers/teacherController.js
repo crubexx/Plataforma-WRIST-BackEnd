@@ -1,4 +1,14 @@
-import { createExperienceService, getTeacherExperiencesService, getConnectedUsersService, createGroupService, assignDeviceService } from '../services/teacherService.js';
+import {
+  createExperienceService,
+  getTeacherExperiencesService,
+  getConnectedUsersService,
+  createGroupService,
+  assignDeviceService,
+  startExperienceService,
+  finishExperienceService,
+  cancelExperienceService,
+  getExperienceQuestionsService
+} from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
 export const createExperience = async (req, res) => {
@@ -72,6 +82,66 @@ export const assignDevice = async (req, res) => {
     );
 
     return res.status(201).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// DOE-006: Iniciar experiencia
+export const startExperience = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const result = await startExperienceService(experimentId, teacherId);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// DOE-007: Finalizar experiencia
+export const finishExperience = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const result = await finishExperienceService(experimentId, teacherId);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// DOE-008: Obtener preguntas de una experiencia
+export const getExperienceQuestions = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const questions = await getExperienceQuestionsService(experimentId, teacherId);
+    return res.status(200).json(questions);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// DOE-009: Cancelar experiencia
+export const cancelExperience = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const result = await cancelExperienceService(experimentId, teacherId);
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({
       message: error.message

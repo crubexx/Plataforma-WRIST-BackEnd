@@ -170,14 +170,227 @@ const migrateUserAuthProvidersTable = async () => {
 };
 
 /**
+ * Tabla UserSession - Sesiones activas de usuarios
+ */
+const migrateUserSessionTable = async () => {
+  console.log('🔄 Verificando tabla UserSession...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'UserSession'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserSession...');
+
+    await pool.query(`
+      CREATE TABLE UserSession (
+        id_session INT AUTO_INCREMENT PRIMARY KEY,
+        id_user INT NOT NULL,
+        session_token VARCHAR(500),
+        is_active BOOLEAN DEFAULT TRUE,
+        login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        logout_time TIMESTAMP NULL,
+        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (id_user) 
+          REFERENCES User(id_user)
+          ON DELETE CASCADE,
+          
+        INDEX idx_user (id_user),
+        INDEX idx_active (is_active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla UserSession creada');
+  } else {
+    console.log('✓ Tabla UserSession ya existe');
+  }
+};
+
+/**
+ * Tabla Experiment - Experimentos/Experiencias
+ */
+const migrateExperimentTable = async () => {
+  console.log('🔄 Verificando tabla Experiment...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'Experiment'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla Experiment...');
+
+    await pool.query(`
+      CREATE TABLE Experiment (
+        id_experiment INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        duration INT COMMENT 'Duración en minutos',
+        status ENUM('CREATED','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'CREATED',
+        created_by INT NOT NULL,
+        start_date DATETIME COMMENT 'Fecha y hora de inicio',
+        end_date DATETIME COMMENT 'Fecha y hora de finalización',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (created_by) 
+          REFERENCES User(id_user)
+          ON DELETE CASCADE,
+          
+        INDEX idx_created_by (created_by),
+        INDEX idx_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla Experiment creada');
+  } else {
+    console.log('✓ Tabla Experiment ya existe, verificando columnas...');
+
+    const [columns] = await pool.query(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = 'DBProductAPP'
+        AND TABLE_NAME = 'Experiment'
+    `);
+
+    const existingColumns = columns.map(c => c.COLUMN_NAME);
+    const alterQueries = [];
+
+    if (!existingColumns.includes('duration')) {
+      alterQueries.push(`ADD COLUMN duration INT COMMENT 'Duración en minutos'`);
+    }
+
+    if (!existingColumns.includes('start_date')) {
+      alterQueries.push(`ADD COLUMN start_date DATETIME COMMENT 'Fecha y hora de inicio'`);
+    }
+
+    if (!existingColumns.includes('end_date')) {
+      alterQueries.push(`ADD COLUMN end_date DATETIME COMMENT 'Fecha y hora de finalización'`);
+    }
+
+    if (!existingColumns.includes('updated_at')) {
+      alterQueries.push(`ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
+    }
+
+    if (alterQueries.length > 0) {
+      await pool.query(`
+        ALTER TABLE Experiment
+        ${alterQueries.join(',')}
+      `);
+      console.log('✓ Columnas faltantes agregadas a Experiment');
+    } else {
+      console.log('✓ Tabla Experiment ya está actualizada');
+    }
+  }
+};
+
+/**
+ * Tabla Question - Preguntas de experiencias
+ */
+const migrateQuestionTable = async () => {
+  console.log('🔄 Verificando tabla Question...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'Question'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla Question...');
+
+    await pool.query(`
+      CREATE TABLE Question (
+        id_question INT AUTO_INCREMENT PRIMARY KEY,
+        id_experiment INT NOT NULL,
+        question_text TEXT NOT NULL,
+        question_order INT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (id_experiment) 
+          REFERENCES Experiment(id_experiment) 
+          ON DELETE CASCADE,
+          
+        INDEX idx_experiment (id_experiment)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla Question creada');
+  } else {
+    console.log('✓ Tabla Question ya existe');
+  }
+};
+
+/**
+ * Tabla QuestionAlternative - Alternativas de respuesta
+ */
+const migrateQuestionAlternativeTable = async () => {
+  console.log('🔄 Verificando tabla QuestionAlternative...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'QuestionAlternative'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla QuestionAlternative...');
+
+    await pool.query(`
+      CREATE TABLE QuestionAlternative (
+        id_alternative INT AUTO_INCREMENT PRIMARY KEY,
+        id_question INT NOT NULL,
+        alternative_text VARCHAR(500) NOT NULL,
+        alternative_order INT NOT NULL DEFAULT 1,
+        
+        FOREIGN KEY (id_question) 
+          REFERENCES Question(id_question) 
+          ON DELETE CASCADE,
+          
+        INDEX idx_question (id_question)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla QuestionAlternative creada');
+  } else {
+    console.log('✓ Tabla QuestionAlternative ya existe');
+  }
+};
+
+/**
  * Ejecutar migraciones
  */
 export const runMigrations = async () => {
-  console.log('\n🚀 Iniciando migraciones...\n');
+  try {
+    console.log('🚀 Iniciando migraciones...\n');
 
-  await createDatabase();
-  await migrateUserTable();
-  await migrateUserAuthProvidersTable();
+    await createDatabase();
+    await migrateUserTable();
+    await migrateUserAuthProvidersTable();
+    await migrateUserSessionTable();
+    await migrateExperimentTable();
+    await migrateQuestionTable();
+    await migrateQuestionAlternativeTable();
 
-  console.log('\n✅ Migraciones completadas correctamente\n');
+    console.log('\n✅ Todas las migraciones completadas exitosamente');
+  } catch (error) {
+    console.error('❌ Error en migraciones:', error);
+    throw error;
+  }
 };

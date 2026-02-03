@@ -1,10 +1,20 @@
-import { createExperienceRepository, getTeacherExperiencesRepository, getConnectedUsersRepository, findExperimentByIdAndTeacher, createGroupRepository } from '../repositories/teacherRepository.js';
+import {
+  createExperienceRepository,
+  getTeacherExperiencesRepository,
+  getConnectedUsersRepository,
+  findExperimentByIdAndTeacher,
+  createGroupRepository,
+  startExperienceRepository,
+  finishExperienceRepository,
+  cancelExperienceRepository,
+  getExperienceQuestionsRepository
+} from '../repositories/teacherRepository.js';
 import { createDeviceAssignment } from '../repositories/deviceRepository.js';
 
 export const createExperienceService = async (data, user) => {
-  const { name, description } = data;
+  const { name, description, duration, questions } = data;
 
-  // Validaciones
+  // Validaciones básicas
   if (!name) throw new Error('Falta completar el campo Nombre');
   if (!description) throw new Error('Falta completar el campo Descripción');
 
@@ -12,10 +22,34 @@ export const createExperienceService = async (data, user) => {
     throw new Error('El nombre de la experiencia debe tener al menos 3 caracteres');
   }
 
+  // Validar preguntas si existen
+  if (questions && questions.length > 0) {
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+
+      if (!q.question || q.question.trim() === '') {
+        throw new Error(`La pregunta ${i + 1} no puede estar vacía`);
+      }
+
+      if (!q.alternatives || q.alternatives.length < 2) {
+        throw new Error(`La pregunta ${i + 1} debe tener al menos 2 alternativas`);
+      }
+
+      // Validar que las alternativas no estén vacías
+      for (let j = 0; j < q.alternatives.length; j++) {
+        if (!q.alternatives[j] || q.alternatives[j].trim() === '') {
+          throw new Error(`La alternativa ${j + 1} de la pregunta ${i + 1} no puede estar vacía`);
+        }
+      }
+    }
+  }
+
   const experienceId = await createExperienceRepository({
     name,
     description,
-    user_id: user.id_user
+    duration,
+    user_id: user.id_user,
+    questions
   });
 
   return {
@@ -104,5 +138,94 @@ export const assignDeviceService = async (teacherId, data) => {
 
   return {
     message: 'Dispositivo agregado correctamente'
+  };
+};
+
+// DOE-006: Iniciar experiencia
+export const startExperienceService = async (experimentId, teacherId) => {
+  // Verificar que la experiencia pertenece al docente
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada o no tienes permisos para iniciarla');
+  }
+
+  // Validar que la experiencia esté en estado CREATED
+  if (experiment.status !== 'CREATED') {
+    throw new Error(`No se puede iniciar una experiencia en estado ${experiment.status}. Solo se pueden iniciar experiencias en estado CREATED.`);
+  }
+
+  const updated = await startExperienceRepository(experimentId);
+
+  if (!updated) {
+    throw new Error('No se pudo iniciar la experiencia');
+  }
+
+  return {
+    message: 'Experiencia iniciada correctamente'
+  };
+};
+
+// DOE-007: Finalizar experiencia
+export const finishExperienceService = async (experimentId, teacherId) => {
+  // Verificar que la experiencia pertenece al docente
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada o no tienes permisos para finalizarla');
+  }
+
+  // Validar que la experiencia esté ACTIVE
+  if (experiment.status !== 'ACTIVE') {
+    throw new Error(`No se puede finalizar una experiencia en estado ${experiment.status}. Solo se pueden finalizar experiencias ACTIVAS.`);
+  }
+
+  const updated = await finishExperienceRepository(experimentId);
+
+  if (!updated) {
+    throw new Error('No se pudo finalizar la experiencia');
+  }
+
+  return {
+    message: 'Experiencia finalizada correctamente'
+  };
+};
+
+// DOE-008: Obtener preguntas de una experiencia
+export const getExperienceQuestionsService = async (experimentId, teacherId) => {
+  // Verificar que la experiencia pertenece al docente
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada o no tienes permisos para ver sus preguntas');
+  }
+
+  const questions = await getExperienceQuestionsRepository(experimentId);
+
+  return questions;
+};
+
+// DOE-009: Cancelar experiencia
+export const cancelExperienceService = async (experimentId, teacherId) => {
+  // Verificar que la experiencia pertenece al docente
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada o no tienes permisos para cancelarla');
+  }
+
+  // Validar que la experiencia no esté ya finalizada o cancelada
+  if (experiment.status === 'COMPLETED' || experiment.status === 'CANCELLED') {
+    throw new Error(`No se puede cancelar una experiencia que ya está ${experiment.status === 'COMPLETED' ? 'finalizada' : 'cancelada'}.`);
+  }
+
+  const updated = await cancelExperienceRepository(experimentId);
+
+  if (!updated) {
+    throw new Error('No se pudo cancelar la experiencia');
+  }
+
+  return {
+    message: 'Experiencia cancelada correctamente'
   };
 };

@@ -106,13 +106,14 @@ export const authenticateWithGoogle = async (idToken) => {
     return {
         token,
         user: {
-            id_user: userWithProvider.id_user,
-            first_name: userWithProvider.first_name,
-            last_name: userWithProvider.last_name,
+            id: userWithProvider.id_user.toString(),
+            name: userWithProvider.first_name,
+            lastName: userWithProvider.last_name,
             email: userWithProvider.email,
             role: userWithProvider.role,
-            picture: userWithProvider.picture,
-            auth_provider: 'GOOGLE'
+            state: userWithProvider.status.toLowerCase(),
+            authMethod: 'google',
+            picture: userWithProvider.picture
         }
     };
 };
