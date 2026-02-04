@@ -205,6 +205,25 @@ export const getTeamsByExperimentRepository = async (experimentId) => {
   }));
 };
 
+// DOE-008: Administrar visualización
+export const updateVisualizationModeRepository = async (
+  experimentId,
+  teacherId,
+  visualizationMode
+) => {
+  const [result] = await pool.query(
+    `
+    UPDATE Experiment
+    SET visualization_mode = ?
+    WHERE id_experiment = ?
+      AND created_by = ?
+    `,
+    [visualizationMode, experimentId, teacherId]
+  );
+
+  return result.affectedRows > 0;
+};
+
 // DOE-010: Iniciar experiencia
 export const startExperienceRepository = async (experimentId) => {
   const [result] = await pool.query(

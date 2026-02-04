@@ -10,7 +10,8 @@ import {
   cancelExperience,
   getExperienceQuestions,
   getExperienceMetrics,
-  getExperienceTeams
+  getExperienceTeams,
+  updateVisualizationMode
 } from '../controllers/teacherController.js';
 import {
   authenticateToken,
@@ -73,6 +74,14 @@ router.get(
   authenticateToken,
   authorizeTeacher,
   getExperienceTeams
+);
+
+// DOE-008: Cambiar modo de visualización
+router.put(
+  '/experiences/:id/visualization-mode',
+  authenticateToken,
+  authorizeTeacher,
+  updateVisualizationMode
 );
 
 // DOE-010: Iniciar experiencia

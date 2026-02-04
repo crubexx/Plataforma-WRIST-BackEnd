@@ -8,7 +8,8 @@ import {
   finishExperienceRepository,
   cancelExperienceRepository,
   getExperienceQuestionsRepository,
-  getTeamsByExperimentRepository
+  getTeamsByExperimentRepository,
+  updateVisualizationModeRepository
 } from '../repositories/teacherRepository.js';
 import { createDeviceAssignment } from '../repositories/deviceRepository.js';
 
@@ -190,6 +191,44 @@ export const getExperienceTeamsService = async (experimentId, teacherId) => {
 
   return teams;
 };
+
+// DOE-008: Administrar visualización
+export const updateVisualizationModeService = async (
+  experimentId,
+  teacherId,
+  visualizationMode
+) => {
+  const allowedModes = ['INDIVIDUAL', 'TEAM', 'MIXED'];
+
+  if (!allowedModes.includes(visualizationMode)) {
+    throw new Error('Modo de visualización no válido');
+  }
+
+  // Validar que la experiencia exista y sea del docente
+  const experiment = await findExperimentByIdAndTeacher(
+    experimentId,
+    teacherId
+  );
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada');
+  }
+
+  const updated = await updateVisualizationModeRepository(
+    experimentId,
+    teacherId,
+    visualizationMode
+  );
+
+  if (!updated) {
+    throw new Error('No se pudo actualizar el modo de visualización');
+  }
+
+  return {
+    message: 'Modo de visualización actualizado correctamente'
+  };
+};
+
 
 // DOE-010: Iniciar experiencia
 export const startExperienceService = async (experimentId, teacherId) => {

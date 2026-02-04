@@ -9,7 +9,8 @@ import {
   cancelExperienceService,
   getExperienceQuestionsService,
   getExperienceMetricsService,
-  getExperienceTeamsService
+  getExperienceTeamsService,
+  updateVisualizationModeService
 } from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
@@ -118,6 +119,26 @@ export const getExperienceTeams = async (req, res) => {
   } catch (error) {
     console.error('DOE-007:', error.message);
     return res.status(400).json({ message: error.message });
+  }
+};
+
+// DOE-008: Administrar visualización
+export const updateVisualizationMode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { visualization_mode } = req.body;
+
+    const result = await updateVisualizationModeService(
+      id,
+      req.user.id_user,
+      visualization_mode
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
   }
 };
 
