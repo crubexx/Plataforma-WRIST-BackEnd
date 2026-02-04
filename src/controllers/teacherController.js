@@ -7,7 +7,9 @@ import {
   startExperienceService,
   finishExperienceService,
   cancelExperienceService,
-  getExperienceQuestionsService
+  getExperienceQuestionsService,
+  getExperienceMetricsService,
+  getExperienceTeamsService
 } from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
@@ -73,7 +75,7 @@ export const createGroup = async (req, res) => {
   }
 };
 
-// DOC-005
+// DOC-005: Agregar dispositivo 
 export const assignDevice = async (req, res) => {
   try {
     const result = await assignDeviceService(
@@ -89,7 +91,37 @@ export const assignDevice = async (req, res) => {
   }
 };
 
-// DOE-006: Iniciar experiencia
+// DOC-006: Mostrar experiencia (métricas)
+export const getExperienceMetrics = async (req, res) => {
+  try {
+    const teacherId = req.user.id_user;
+    const { id } = req.params;
+
+    const metrics = await getExperienceMetricsService(id, teacherId);
+
+    return res.status(200).json(metrics);
+  } catch (error) {
+    console.error('DOE-006:', error.message);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// DOC-007: Visualizar equipos
+export const getExperienceTeams = async (req, res) => {
+  try {
+    const teacherId = req.user.id_user;
+    const { id } = req.params;
+
+    const teams = await getExperienceTeamsService(id, teacherId);
+
+    return res.status(200).json(teams);
+  } catch (error) {
+    console.error('DOE-007:', error.message);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// DOE-010: Iniciar experiencia
 export const startExperience = async (req, res) => {
   try {
     const experimentId = parseInt(req.params.id);
@@ -104,7 +136,7 @@ export const startExperience = async (req, res) => {
   }
 };
 
-// DOE-007: Finalizar experiencia
+// DOE-011: Finalizar experiencia
 export const finishExperience = async (req, res) => {
   try {
     const experimentId = parseInt(req.params.id);
@@ -119,7 +151,7 @@ export const finishExperience = async (req, res) => {
   }
 };
 
-// DOE-008: Obtener preguntas de una experiencia
+// DOE-012: Obtener preguntas de una experiencia
 export const getExperienceQuestions = async (req, res) => {
   try {
     const experimentId = parseInt(req.params.id);
@@ -134,7 +166,7 @@ export const getExperienceQuestions = async (req, res) => {
   }
 };
 
-// DOE-009: Cancelar experiencia
+// DOE-013: Cancelar experiencia
 export const cancelExperience = async (req, res) => {
   try {
     const experimentId = parseInt(req.params.id);

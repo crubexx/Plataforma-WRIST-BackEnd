@@ -8,7 +8,9 @@ import {
   startExperience,
   finishExperience,
   cancelExperience,
-  getExperienceQuestions
+  getExperienceQuestions,
+  getExperienceMetrics,
+  getExperienceTeams
 } from '../controllers/teacherController.js';
 import {
   authenticateToken,
@@ -57,7 +59,23 @@ router.post(
   assignDevice
 );
 
-// DOE-006: Iniciar experiencia
+// DOE-006: Mostrar experiencia (métricas)
+router.get(
+  '/experiences/:id/metrics',
+  authenticateToken,
+  authorizeTeacher,
+  getExperienceMetrics
+);
+
+// DOE-007: Visualizar equipos de una experiencia
+router.get(
+  '/experiences/:id/teams',
+  authenticateToken,
+  authorizeTeacher,
+  getExperienceTeams
+);
+
+// DOE-010: Iniciar experiencia
 router.post(
   '/experiences/:id/start',
   authenticateToken,
@@ -65,7 +83,7 @@ router.post(
   startExperience
 );
 
-// DOE-007: Finalizar experiencia
+// DOE-011: Finalizar experiencia
 router.post(
   '/experiences/:id/finish',
   authenticateToken,
@@ -73,7 +91,7 @@ router.post(
   finishExperience
 );
 
-// DOE-008: Obtener preguntas de una experiencia
+// DOE-012: Obtener preguntas de una experiencia
 router.get(
   '/experiences/:id/questions',
   authenticateToken,
@@ -81,7 +99,7 @@ router.get(
   getExperienceQuestions
 );
 
-// DOE-009: Cancelar experiencia
+// DOE-013: Cancelar experiencia
 router.post(
   '/experiences/:id/cancel',
   authenticateToken,

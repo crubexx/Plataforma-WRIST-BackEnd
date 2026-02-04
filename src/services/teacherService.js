@@ -7,7 +7,8 @@ import {
   startExperienceRepository,
   finishExperienceRepository,
   cancelExperienceRepository,
-  getExperienceQuestionsRepository
+  getExperienceQuestionsRepository,
+  getTeamsByExperimentRepository
 } from '../repositories/teacherRepository.js';
 import { createDeviceAssignment } from '../repositories/deviceRepository.js';
 
@@ -103,7 +104,7 @@ export const createGroupService = async (teacherId, data) => {
   };
 };
 
-// DOC-005
+// DOC-005: Agregar dispositivo 
 export const assignDeviceService = async (teacherId, data) => {
   const {
     external_device_id,
@@ -113,12 +114,12 @@ export const assignDeviceService = async (teacherId, data) => {
     id_user
   } = data;
 
-  // 1️⃣ Validaciones básicas
+  // Validaciones básicas
   if (!external_device_id || !device_type) {
     throw new Error('Faltan datos del dispositivo');
   }
 
-  // 2️⃣ Solo un destino
+  // Solo un destino
   const targets = [id_experiment, id_group, id_user].filter(Boolean);
   if (targets.length !== 1) {
     throw new Error(
@@ -126,7 +127,7 @@ export const assignDeviceService = async (teacherId, data) => {
     );
   }
 
-  // 3️⃣ Si es experiencia, validar que sea del docente
+  // Si es experiencia, validar que sea del docente
   if (id_experiment) {
     const exp = await findExperimentByIdAndTeacher(id_experiment, teacherId);
     if (!exp || exp.created_by !== teacherId) {
@@ -141,7 +142,56 @@ export const assignDeviceService = async (teacherId, data) => {
   };
 };
 
-// DOE-006: Iniciar experiencia
+// DOC-006: Mostrar experiencia (métricas)
+export const getExperienceMetricsService = async (experimentId, teacherId) => {
+  // Verificar que la experiencia exista y sea del docente
+  const experiment = await findExperimentByIdAndTeacher(
+    experimentId,
+    teacherId
+  );
+
+  if (!experiment) {
+    throw new Error('La experiencia no existe o no pertenece al docente');
+  }
+
+  // Obtener métricas
+  const metrics = await getExperienceMetricsRepository(experimentId);
+
+  return {
+    experiment: {
+      id: experiment.id_experiment,
+      name: experiment.name,
+      status: experiment.status
+    },
+    metrics
+  };
+};
+
+// DOC-007: Visualizar equipos
+export const getExperienceTeamsService = async (experimentId, teacherId) => {
+  // Validar experiencia del docente
+  const experiment = await findExperimentByIdAndTeacher(
+    experimentId,
+    teacherId
+  );
+
+  if (!experiment) {
+    throw new Error('La experiencia no existe o no pertenece al docente');
+  }
+
+  // Obtener equipos
+  const teams = await getTeamsByExperimentRepository(experimentId);
+
+  if (teams.length === 0) {
+    return {
+      message: 'La experiencia no tiene equipos registrados'
+    };
+  }
+
+  return teams;
+};
+
+// DOE-010: Iniciar experiencia
 export const startExperienceService = async (experimentId, teacherId) => {
   // Verificar que la experiencia pertenece al docente
   const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
@@ -166,7 +216,7 @@ export const startExperienceService = async (experimentId, teacherId) => {
   };
 };
 
-// DOE-007: Finalizar experiencia
+// DOE-011: Finalizar experiencia
 export const finishExperienceService = async (experimentId, teacherId) => {
   // Verificar que la experiencia pertenece al docente
   const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
@@ -191,7 +241,7 @@ export const finishExperienceService = async (experimentId, teacherId) => {
   };
 };
 
-// DOE-008: Obtener preguntas de una experiencia
+// DOE-012: Obtener preguntas de una experiencia
 export const getExperienceQuestionsService = async (experimentId, teacherId) => {
   // Verificar que la experiencia pertenece al docente
   const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
@@ -205,7 +255,7 @@ export const getExperienceQuestionsService = async (experimentId, teacherId) => 
   return questions;
 };
 
-// DOE-009: Cancelar experiencia
+// DOE-013: Cancelar experiencia
 export const cancelExperienceService = async (experimentId, teacherId) => {
   // Verificar que la experiencia pertenece al docente
   const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
