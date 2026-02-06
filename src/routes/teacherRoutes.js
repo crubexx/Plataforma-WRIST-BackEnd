@@ -11,7 +11,9 @@ import {
   getExperienceQuestions,
   getExperienceMetrics,
   getExperienceTeams,
-  updateVisualizationMode
+  updateVisualizationMode,
+  generateExperimentFeedback,
+  createManualFeedback
 } from '../controllers/teacherController.js';
 import {
   authenticateToken,
@@ -83,6 +85,23 @@ router.put(
   authorizeTeacher,
   updateVisualizationMode
 );
+
+// DOE-009: Generar retroalimentación automática
+router.post(
+  '/experiences/:id/feedback/auto',
+  authenticateToken,
+  authorizeTeacher,
+  generateExperimentFeedback
+);
+
+// DOE-009: Retroalimentación manual
+router.post(
+  '/experiences/:id/feedback/manual',
+  authenticateToken,
+  authorizeTeacher,
+  createManualFeedback
+);
+
 
 // DOE-010: Iniciar experiencia
 router.post(

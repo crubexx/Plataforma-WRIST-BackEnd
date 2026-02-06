@@ -10,7 +10,9 @@ import {
   getExperienceQuestionsService,
   getExperienceMetricsService,
   getExperienceTeamsService,
-  updateVisualizationModeService
+  updateVisualizationModeService,
+  generateExperimentFeedbackService,
+  createManualFeedbackService
 } from '../services/teacherService.js';
 
 // DOE-001: Crear experiencia
@@ -139,6 +141,39 @@ export const updateVisualizationMode = async (req, res) => {
     return res.status(400).json({
       message: error.message
     });
+  }
+};
+
+// DOE-009: Generar feedback
+export const generateExperimentFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await generateExperimentFeedbackService(
+      id,
+      req.user.id_user
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+export const createManualFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+
+    const result = await createManualFeedbackService(
+      id,
+      req.user.id_user,
+      message
+    );
+
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 };
 

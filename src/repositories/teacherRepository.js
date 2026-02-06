@@ -224,6 +224,42 @@ export const updateVisualizationModeRepository = async (
   return result.affectedRows > 0;
 };
 
+// DOE-009: Feedback
+export const createExperimentFeedbackRepository = async (
+  experimentId,
+  type,
+  message,
+  teacherId
+) => {
+  const [result] = await pool.query(
+    `
+    INSERT INTO ExperimentFeedback
+      (id_experiment, feedback_type, message, created_by)
+    VALUES (?, ?, ?, ?)
+    `,
+    [experimentId, type, message, teacherId]
+  );
+
+  return result.insertId;
+};
+
+export const getExperimentMetricsRepository = async (experimentId) => {
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      COUNT(*) AS total_sessions,
+      AVG(TIMESTAMPDIFF(MINUTE, start_ts, end_ts)) AS avg_time
+    FROM SessionMeasurement sm
+    INNER JOIN \`Group\` g ON sm.id_group = g.id_group
+    WHERE g.id_experiment = ?
+      AND sm.end_ts IS NOT NULL
+    `,
+    [experimentId]
+  );
+
+  return rows[0];
+};
+
 // DOE-010: Iniciar experiencia
 export const startExperienceRepository = async (experimentId) => {
   const [result] = await pool.query(

@@ -9,7 +9,9 @@ import {
   cancelExperienceRepository,
   getExperienceQuestionsRepository,
   getTeamsByExperimentRepository,
-  updateVisualizationModeRepository
+  updateVisualizationModeRepository,
+  createExperimentFeedbackRepository,
+  getExperimentMetricsRepository
 } from '../repositories/teacherRepository.js';
 import { createDeviceAssignment } from '../repositories/deviceRepository.js';
 
@@ -226,6 +228,64 @@ export const updateVisualizationModeService = async (
 
   return {
     message: 'Modo de visualización actualizado correctamente'
+  };
+};
+
+// DOE-009: Feedback
+export const generateExperimentFeedbackService = async (
+  experimentId,
+  teacherId
+) => {
+  const experiment = await findExperimentByIdAndTeacher(
+    experimentId,
+    teacherId
+  );
+
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada');
+  }
+
+  const metrics = await getExperimentMetricsRepository(experimentId);
+
+  if (!metrics || metrics.total_sessions === 0) {
+    throw new Error(
+      'No hay datos suficientes para generar retroalimentación'
+    );
+  }
+
+  // Alerta por exceso de tiempo (ejemplo > 60 min)
+  if (metrics.avg_time > 60) {
+    await createExperimentFeedbackRepository(
+      experimentId,
+      'TIME_ALERT',
+      'Se detectó un tiempo promedio elevado por estación.',
+      teacherId
+    );
+  }
+
+  return {
+    message: 'Retroalimentación generada correctamente'
+  };
+};
+
+export const createManualFeedbackService = async (
+  experimentId,
+  teacherId,
+  message
+) => {
+  if (!message || message.length < 5) {
+    throw new Error('La retroalimentación es obligatoria');
+  }
+
+  await createExperimentFeedbackRepository(
+    experimentId,
+    'TEACHER_FEEDBACK',
+    message,
+    teacherId
+  );
+
+  return {
+    message: 'Retroalimentación registrada correctamente'
   };
 };
 
