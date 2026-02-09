@@ -70,11 +70,10 @@ export const getSuspendedUsersRepository = async () => {
       status,
       gender,
       date_of_birth,
-      picture,
-      registration_date
+      picture
     FROM User
     WHERE status = 'SUSPENDED'
-    ORDER BY registration_date DESC
+    ORDER BY created_at DESC
   `);
 
   return rows;
@@ -110,7 +109,6 @@ export const updateUserRepository = async (id, data) => {
   );
 };
 
-// CAMBIAR NOMBRES BDD DEL LAB
 // ADM-006: Ver historial de experiencias
 export const getAllExperiencesRepository = async () => {
   const [rows] = await pool.query(`
@@ -123,9 +121,9 @@ export const getAllExperiencesRepository = async () => {
       e.end_date,
       CONCAT(u.first_name, ' ', u.last_name) AS responsable,
       u.role AS rol_responsable
-    FROM Experimento e
-    INNER JOIN User u ON e.id_user = u.id_user
-    ORDER BY e.fecha_inicio DESC
+    FROM Experiment e
+    INNER JOIN User u ON e.created_by = u.id_user
+    ORDER BY e.start_date DESC
   `);
 
   return rows;
