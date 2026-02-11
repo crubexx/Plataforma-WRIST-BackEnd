@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getExperiencesByDate, joinExperience } from '../controllers/userController.js';
+import { getExperiencesByDate, joinExperience, getMyProfile } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -17,5 +17,13 @@ router.post(
   authenticateToken,
   joinExperience
 );
+
+// USR-003: Ver perfil del usuario
+router.get(
+  '/profile',
+  authenticateToken,
+  getMyProfile
+);
+
 
 export default router;

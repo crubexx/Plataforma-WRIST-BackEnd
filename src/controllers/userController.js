@@ -1,4 +1,4 @@
-import { getExperiencesByDateService, joinExperienceService } from '../services/userService.js';
+import { getExperiencesByDateService, joinExperienceService, getUserProfileService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -32,6 +32,21 @@ export const joinExperience = async (req, res) => {
     );
 
     return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-003: Ver perfil
+export const getMyProfile = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+
+    const profile = await getUserProfileService(id_user);
+
+    return res.status(200).json(profile);
   } catch (error) {
     return res.status(400).json({
       message: error.message

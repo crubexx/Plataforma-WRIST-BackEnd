@@ -3,7 +3,8 @@ import {
   findExperienceById,
   countParticipants,
   isUserAlreadyJoined,
-  joinExperience
+  joinExperience,
+  findUserProfileById
 } from '../repositories/userRepository.js';
 
 export const joinExperienceService = async (
@@ -62,4 +63,22 @@ export const getExperiencesByDateService = async (date) => {
     max_participants: exp.max_participants,
     can_enter_code: exp.status === 'PREPARATION'
   }));
+};
+
+export const getUserProfileService = async (id_user) => {
+  const user = await findUserProfileById(id_user);
+
+  if (!user) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  return {
+    id_user: user.id_user,
+    full_name: `${user.first_name} ${user.last_name}`,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    picture: user.picture, // puede ser null
+    created_at: user.created_at
+  };
 };

@@ -52,3 +52,24 @@ export const joinExperience = async (id_experience, id_user) => {
     [id_experience, id_user]
   );
 };
+
+export const findUserProfileById = async (id_user) => {
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      id_user,
+      first_name,
+      last_name,
+      email,
+      role,
+      status,
+      picture,
+      created_at
+    FROM User
+    WHERE id_user = ?
+    `,
+    [id_user]
+  );
+
+  return rows[0];
+};
