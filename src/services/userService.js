@@ -1,5 +1,50 @@
-import { getExperiencesByDateRepository } from '../repositories/userRepository.js';
+import { 
+  getExperiencesByDateRepository, 
+  findExperienceById,
+  countParticipants,
+  isUserAlreadyJoined,
+  joinExperience
+} from '../repositories/userRepository.js';
 
+export const joinExperienceService = async (
+  id_experience,
+  access_code,
+  id_user
+) => {
+  const experience = await findExperienceById(id_experience);
+
+  if (!experience) {
+    throw new Error('La experiencia no existe');
+  }
+
+  // 1️⃣ Estado
+  if (experience.status !== 'EN_PREPARATION') {
+    throw new Error('La experiencia no está disponible para ingreso');
+  }
+
+  // 2️⃣ Código
+  if (experience.access_code !== access_code) {
+    throw new Error('El código ingresado es incorrecto');
+  }
+
+  // 3️⃣ Ya unido
+  if (await isUserAlreadyJoined(id_experience, id_user)) {
+    throw new Error('Ya te encuentras inscrito en esta experiencia');
+  }
+
+  // 4️⃣ Capacidad
+  const total = await countParticipants(id_experience);
+  if (total >= experience.max_participants) {
+    throw new Error('La experiencia ya alcanzó el máximo de participantes');
+  }
+
+  // 5️⃣ Registrar participación
+  await joinExperience(id_experience, id_user);
+
+  return {
+    message: 'Te has unido a la experiencia correctamente'
+  };
+};
 export const getExperiencesByDateService = async (date) => {
   const experiences = await getExperiencesByDateRepository(date);
 

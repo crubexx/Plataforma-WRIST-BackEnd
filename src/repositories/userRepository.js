@@ -20,3 +20,35 @@ export const getExperiencesByDateRepository = async (date) => {
 
   return rows;
 };
+
+export const findExperienceById = async (id_experience) => {
+  const [rows] = await pool.query(
+    `SELECT * FROM experience WHERE id_experience = ?`,
+    [id_experience]
+  );
+  return rows[0];
+};
+
+export const countParticipants = async (id_experience) => {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM experience_user WHERE id_experience = ?`,
+    [id_experience]
+  );
+  return rows[0].total;
+};
+
+export const isUserAlreadyJoined = async (id_experience, id_user) => {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM experience_user WHERE id_experience = ? AND id_user = ?`,
+    [id_experience, id_user]
+  );
+  return rows.length > 0;
+};
+
+export const joinExperience = async (id_experience, id_user) => {
+  await pool.query(
+    `INSERT INTO experience_user (id_experience, id_user)
+     VALUES (?, ?)`,
+    [id_experience, id_user]
+  );
+};

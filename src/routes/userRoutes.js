@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getExperiencesByDate } from '../controllers/userController.js';
+import { getExperiencesByDate, joinExperience } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -9,6 +9,13 @@ router.get(
   '/experiences',
   authenticateToken,
   getExperiencesByDate
+);
+
+// USR-002: Unirse a experiencia
+router.post(
+  '/experiences/join',
+  authenticateToken,
+  joinExperience
 );
 
 export default router;
