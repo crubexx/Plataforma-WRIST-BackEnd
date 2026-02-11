@@ -4,7 +4,9 @@ import {
   countParticipants,
   isUserAlreadyJoined,
   joinExperience,
-  findUserProfileById
+  findUserProfileById,
+  getUserAveragesRepository,
+  getUserExperienceResultsRepository
 } from '../repositories/userRepository.js';
 
 export const joinExperienceService = async (
@@ -80,5 +82,36 @@ export const getUserProfileService = async (id_user) => {
     status: user.status,
     picture: user.picture, // puede ser null
     created_at: user.created_at
+  };
+};
+
+export const getUserResultsService = async (id_user) => {
+  const results = await getUserExperienceResultsRepository(id_user);
+
+  if (!results || results.length === 0) {
+    return {
+      message: 'No existen resultados de experimentos para mostrar'
+    };
+  }
+
+  const averages = await getUserAveragesRepository(id_user);
+
+  return {
+    averages: {
+      productivity: averages.avg_productivity
+        ? Number(averages.avg_productivity).toFixed(2)
+        : null,
+      stress: averages.avg_stress
+        ? Number(averages.avg_stress).toFixed(2)
+        : null
+    },
+    experiences: results.map(r => ({
+      experience_name: r.experience_name,
+      status: r.estado,
+      productivity_score: r.productivity_score,
+      stress_level: r.stress_level,
+      feedback: r.feedback,
+      date: r.created_at
+    }))
   };
 };

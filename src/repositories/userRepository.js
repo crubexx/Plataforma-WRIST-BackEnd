@@ -73,3 +73,40 @@ export const findUserProfileById = async (id_user) => {
 
   return rows[0];
 };
+
+export const getUserExperienceResultsRepository = async (id_user) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+      e.id_experiment,
+      e.name AS experience_name,
+      e.status,
+      r.productivity_score,
+      r.stress_level,
+      r.feedback,
+      r.created_at
+    FROM UserExperienceResult r
+    INNER JOIN Experimento e ON r.id_experiment = e.id_experiment
+    WHERE r.id_user = ?
+    ORDER BY r.created_at DESC
+    `,
+    [id_user]
+  );
+
+  return rows;
+};
+
+export const getUserAveragesRepository = async (id_user) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+      AVG(productivity_score) AS avg_productivity,
+      AVG(stress_level) AS avg_stress
+    FROM UserExperienceResult
+    WHERE id_user = ?
+    `,
+    [id_user]
+  );
+
+  return rows[0];
+};

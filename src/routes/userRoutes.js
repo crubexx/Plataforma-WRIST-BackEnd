@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getExperiencesByDate, joinExperience, getMyProfile } from '../controllers/userController.js';
+import { getExperiencesByDate, joinExperience, getMyProfile, getMyResults } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -25,5 +25,11 @@ router.get(
   getMyProfile
 );
 
+// USR-004: Ver resultados de experiencias
+router.get(
+  '/results',
+  authenticateToken,
+  getMyResults
+);
 
 export default router;
