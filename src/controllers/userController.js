@@ -1,4 +1,4 @@
-import { getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService } from '../services/userService.js';
+import { getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -70,6 +70,26 @@ export const getMyResults = async (req, res) => {
     console.error('USR-004 error:', error);
     return res.status(500).json({
       message: 'Error al obtener resultados'
+    });
+  }
+};
+
+// USR-005: Unirse a un equipo
+export const joinTeam = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experimento, id_group } = req.body;
+
+    const result = await joinTeamService(
+      id_user,
+      id_experimento,
+      id_group
+    );
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
     });
   }
 };

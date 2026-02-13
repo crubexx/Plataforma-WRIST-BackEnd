@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getExperiencesByDate, joinExperience, getMyProfile, getMyResults } from '../controllers/userController.js';
+import { getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -30,6 +30,13 @@ router.get(
   '/results',
   authenticateToken,
   getMyResults
+);
+
+// USR-005: Unirse a un equipo
+router.post(
+  '/join-team',
+  authenticateToken,
+  joinTeam
 );
 
 export default router;

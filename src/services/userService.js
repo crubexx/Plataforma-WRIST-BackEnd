@@ -6,7 +6,13 @@ import {
   joinExperience,
   findUserProfileById,
   getUserAveragesRepository,
-  getUserExperienceResultsRepository
+  getUserExperienceResultsRepository,
+  isUserInExperience,
+  getExperimentStatus,
+  getGroupInfo,
+  removeUserFromGroups,
+  assignUserToGroup,
+  getAssignedDevice
 } from '../repositories/userRepository.js';
 
 export const joinExperienceService = async (
@@ -113,5 +119,44 @@ export const getUserResultsService = async (id_user) => {
       feedback: r.feedback,
       date: r.created_at
     }))
+  };
+};
+
+export const joinTeamService = async (id_user, id_experimento, id_group) => {
+
+  // 1️⃣ Usuario debe estar inscrito en la experiencia
+  const enrolled = await isUserInExperience(id_user, id_experimento);
+  if (!enrolled) {
+    throw new Error('El usuario no está inscrito en la experiencia');
+  }
+
+  // 2️⃣ Experiencia debe estar en PREPARATION
+  const exp = await getExperimentStatus(id_experimento);
+  if (!exp || exp.estado !== 'PREPARATION') {
+    throw new Error('No es posible cambiar de equipo en esta etapa');
+  }
+
+  // 3️⃣ Capacidad del equipo
+  const group = await getGroupInfo(id_group);
+  if (!group) {
+    throw new Error('Equipo no encontrado');
+  }
+
+  if (group.members >= group.capacity) {
+    throw new Error('El equipo ha alcanzado su capacidad máxima');
+  }
+
+  // 4️⃣ Quitar de otros equipos (permite cambiar durante preparación)
+  await removeUserFromGroups(id_user, id_experimento);
+
+  // 5️⃣ Asignar al nuevo equipo
+  await assignUserToGroup(id_user, id_group);
+
+  // 6️⃣ Obtener dispositivo asignado
+  const device = await getAssignedDevice(id_user, id_experimento);
+
+  return {
+    message: 'Usuario asignado al equipo correctamente',
+    device: device ? device.device_code : 'Dispositivo aún no asignado'
   };
 };
