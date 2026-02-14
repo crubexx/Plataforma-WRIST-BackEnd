@@ -1,4 +1,4 @@
-import { getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
+import { getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -87,6 +87,26 @@ export const joinTeam = async (req, res) => {
     );
 
     return res.status(200).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-006: Ver mi desempeño
+export const getMyPerformance = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experimento } = req.params;
+
+    const result = await getMyPerformanceService(
+      id_user,
+      id_experimento
+    );
+
+    return res.status(200).json(result);
+
   } catch (error) {
     return res.status(400).json({
       message: error.message

@@ -12,8 +12,10 @@ import {
   getGroupInfo,
   removeUserFromGroups,
   assignUserToGroup,
-  getAssignedDevice
+  getAssignedDevice,
 } from '../repositories/userRepository.js';
+
+import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
 
 export const joinExperienceService = async (
   id_experience,
@@ -158,5 +160,42 @@ export const joinTeamService = async (id_user, id_experimento, id_group) => {
   return {
     message: 'Usuario asignado al equipo correctamente',
     device: device ? device.device_code : 'Dispositivo aún no asignado'
+  };
+};
+
+// Performance
+
+export const getMyPerformanceService = async (id_user, id_experimento) => {
+
+  const data = await getUserPerformance(id_user, id_experimento);
+
+  // 1️⃣ No hay datos
+  if (!data) {
+    throw new Error('La experiencia no ha sido iniciada');
+  }
+
+  // 2️⃣ Experiencia no iniciada
+  if (data.estado === 'PREPARATION') {
+    throw new Error('La experiencia aún no ha sido iniciada');
+  }
+
+  // 3️⃣ Visualización bloqueada por docente
+  if (!data.performance_visible) {
+    return {
+      blocked: true,
+      message: 'Visualización desactivada por el docente'
+    };
+  }
+
+  // 4️⃣ Mostrar desempeño
+  return {
+    blocked: false,
+    performance: {
+      total_time_seconds: data.total_time_seconds,
+      stress_level: data.stress_level,
+      productivity_level: data.productivity_level,
+      work_phase_productivity: data.work_phase_productivity,
+      restart_count: data.restart_count
+    }
   };
 };
