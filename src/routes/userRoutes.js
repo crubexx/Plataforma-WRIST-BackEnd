@@ -46,5 +46,11 @@ router.get(
   getMyPerformance
 );
 
+// USR-007: Feedback
+router.get(
+  '/feedback/:id_experimento',
+  authenticateToken,
+  getUserFeedback
+);
 
 export default router;

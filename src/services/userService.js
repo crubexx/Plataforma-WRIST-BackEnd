@@ -13,7 +13,10 @@ import {
   removeUserFromGroups,
   assignUserToGroup,
   getAssignedDevice,
+  getUserFeedback
 } from '../repositories/userRepository.js';
+
+import { pool } from '../config/database.js';
 
 import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
 
@@ -198,4 +201,39 @@ export const getMyPerformanceService = async (id_user, id_experimento) => {
       restart_count: data.restart_count
     }
   };
+};
+
+export const getUserFeedbackService = async (id_user, id_experimento) => {
+
+  // 1️⃣ Verificar estado del experimento
+  const [exp] = await pool.query(
+    `SELECT estado FROM Experimento WHERE id_experimento = ?`,
+    [id_experimento]
+  );
+
+  if (!exp.length) {
+    throw new Error('La experiencia no existe');
+  }
+
+  if (exp[0].estado !== 'IN_PROGRESS') {
+    throw new Error('El feedback solo está disponible cuando la experiencia está en progreso');
+  }
+
+  // 2️⃣ Verificar que el usuario esté en un equipo
+  const [teamCheck] = await pool.query(
+    `
+    SELECT 1 FROM GrupoUsuario gu
+    INNER JOIN Grupo g ON gu.id_group = g.id_group
+    WHERE gu.id_user = ? AND g.id_experimento = ?
+    `,
+    [id_user, id_experimento]
+  );
+
+  if (!teamCheck.length) {
+    throw new Error('El usuario no pertenece a un equipo en esta experiencia');
+  }
+
+  const feedback = await getUserFeedback(id_user, id_experimento);
+
+  return feedback;
 };
