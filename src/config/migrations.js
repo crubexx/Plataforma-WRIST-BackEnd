@@ -236,7 +236,9 @@ const migrateExperimentTable = async () => {
         name VARCHAR(255) NOT NULL,
         description TEXT,
         duration INT COMMENT 'Duración en minutos',
-        status ENUM('CREATED','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'CREATED',
+        max_participants INT DEFAULT 50,
+        access_code VARCHAR(10),
+        status ENUM('CREATED','EN_PREPARATION','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'CREATED',
         created_by INT NOT NULL,
         start_date DATETIME COMMENT 'Fecha y hora de inicio',
         end_date DATETIME COMMENT 'Fecha y hora de finalización',
@@ -268,6 +270,14 @@ const migrateExperimentTable = async () => {
 
     if (!existingColumns.includes('duration')) {
       alterQueries.push(`ADD COLUMN duration INT COMMENT 'Duración en minutos'`);
+    }
+
+    if (!existingColumns.includes('max_participants')) {
+      alterQueries.push(`ADD COLUMN max_participants INT DEFAULT 50`);
+    }
+
+    if (!existingColumns.includes('access_code')) {
+      alterQueries.push(`ADD COLUMN access_code VARCHAR(10)`);
     }
 
     if (!existingColumns.includes('start_date')) {
@@ -374,6 +384,309 @@ const migrateQuestionAlternativeTable = async () => {
 };
 
 /**
+ * Tabla UserExperience - Inscripción de participantes en experiencias
+ */
+const migrateUserExperienceTable = async () => {
+  console.log('🔄 Verificando tabla UserExperience...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'UserExperience'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserExperience...');
+
+    await pool.query(`
+      CREATE TABLE UserExperience (
+        id_user INT NOT NULL,
+        id_experiment INT NOT NULL,
+        is_ready BOOLEAN DEFAULT FALSE,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_user, id_experiment),
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE CASCADE,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla UserExperience creada');
+  } else {
+    console.log('✓ Tabla UserExperience ya existe. Verificando columnas...');
+
+    // Verificamos si existe la columna is_ready
+    const [columns] = await pool.query(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = 'DBProductAPP' 
+        AND TABLE_NAME = 'UserExperience' 
+        AND COLUMN_NAME = 'is_ready'
+    `);
+
+    if (columns.length === 0) {
+      console.log('➕ Agregando columna is_ready a UserExperience...');
+      await pool.query('ALTER TABLE UserExperience ADD COLUMN is_ready BOOLEAN DEFAULT FALSE');
+      console.log('✅ Columna is_ready agregada');
+    }
+  }
+};
+
+/**
+ * Tabla UserPerformance - Métricas de desempeño en tiempo real
+ */
+const migrateUserPerformanceTable = async () => {
+  console.log('🔄 Verificando tabla UserPerformance...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'UserPerformance'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserPerformance...');
+
+    await pool.query(`
+      CREATE TABLE UserPerformance (
+        id_performance INT AUTO_INCREMENT PRIMARY KEY,
+        id_user INT NOT NULL,
+        id_experiment INT NOT NULL,
+        total_time_seconds INT DEFAULT 0,
+        stress_level DECIMAL(5,2) DEFAULT 0,
+        productivity_level DECIMAL(5,2) DEFAULT 0,
+        work_phase_productivity DECIMAL(5,2) DEFAULT 0,
+        restart_count INT DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE CASCADE,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE,
+        UNIQUE (id_user, id_experiment)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla UserPerformance creada');
+  } else {
+    console.log('✓ Tabla UserPerformance ya existe');
+  }
+};
+
+/**
+ * Tabla UserExperienceResult - Resultados de los participantes
+ */
+const migrateUserExperienceResultTable = async () => {
+  console.log('🔄 Verificando tabla UserExperienceResult...');
+
+  const [tables] = await pool.query(`
+    SELECT TABLE_NAME 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = 'DBProductAPP'
+      AND TABLE_NAME = 'UserExperienceResult'
+  `);
+
+  await pool.query('USE DBProductAPP');
+
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserExperienceResult...');
+
+    await pool.query(`
+      CREATE TABLE UserExperienceResult (
+        id_result INT AUTO_INCREMENT PRIMARY KEY,
+        id_experiment INT NOT NULL,
+        id_user INT NOT NULL,
+        productivity_score DECIMAL(5,2),
+        stress_level DECIMAL(5,2),
+        feedback TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (id_experiment) 
+          REFERENCES Experiment(id_experiment) 
+          ON DELETE CASCADE,
+        FOREIGN KEY (id_user) 
+          REFERENCES User(id_user) 
+          ON DELETE CASCADE,
+          
+        INDEX idx_experiment (id_experiment),
+        INDEX idx_user (id_user)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    console.log('✅ Tabla UserExperienceResult creada');
+  } else {
+    console.log('✓ Tabla UserExperienceResult ya existe');
+  }
+};
+
+/**
+ * Tabla Group - Equipos de una experiencia
+ */
+const migrateGroupTable = async () => {
+  console.log('🔄 Verificando tabla Group...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'Group'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla Group...');
+    await pool.query(`
+      CREATE TABLE \`Group\` (
+        id_group INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        capacity INT DEFAULT 3,
+        is_active BOOLEAN DEFAULT TRUE,
+        id_experiment INT NOT NULL,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla Group creada');
+  } else {
+    console.log('✓ Tabla Group ya existe. Verificando columnas...');
+
+    const [columns] = await pool.query(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = 'DBProductAPP' 
+        AND TABLE_NAME = 'Group' 
+        AND COLUMN_NAME = 'capacity'
+    `);
+
+    if (columns.length === 0) {
+      console.log('➕ Agregando columna capacity a Group...');
+      await pool.query('ALTER TABLE \`Group\` ADD COLUMN capacity INT DEFAULT 3');
+      console.log('✅ Columna capacity agregada');
+    }
+  }
+};
+
+/**
+ * Tabla UserGroup - Relación muchos a muchos entre User y Group
+ */
+const migrateUserGroupTable = async () => {
+  console.log('🔄 Verificando tabla UserGroup...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'UserGroup'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserGroup...');
+    await pool.query(`
+      CREATE TABLE UserGroup (
+        id_user INT NOT NULL,
+        id_group INT NOT NULL,
+        PRIMARY KEY (id_user, id_group),
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE CASCADE,
+        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla UserGroup creada');
+  } else {
+    console.log('✓ Tabla UserGroup ya existe');
+  }
+};
+
+/**
+ * Tabla Device - Dispositivos físicos
+ */
+const migrateDeviceTable = async () => {
+  console.log('🔄 Verificando tabla Device...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'Device'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla Device...');
+    await pool.query(`
+      CREATE TABLE Device (
+        id_device INT AUTO_INCREMENT PRIMARY KEY,
+        device_code VARCHAR(100) NOT NULL UNIQUE,
+        device_type ENUM('PULSERA','TOTEM') NOT NULL,
+        status ENUM('AVAILABLE','ASSIGNED','OFFLINE') DEFAULT 'AVAILABLE'
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla Device creada');
+  } else {
+    console.log('✓ Tabla Device ya existe');
+  }
+};
+
+/**
+ * Tabla DeviceAssignment - Asignaciones de dispositivos
+ */
+const migrateDeviceAssignmentTable = async () => {
+  console.log('🔄 Verificando tabla DeviceAssignment...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'DeviceAssignment'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla DeviceAssignment...');
+    await pool.query(`
+      CREATE TABLE DeviceAssignment (
+        id_assignment INT AUTO_INCREMENT PRIMARY KEY,
+        id_user INT,
+        id_experiment INT,
+        id_group INT,
+        id_device INT,
+        external_device_id VARCHAR(100),
+        device_type VARCHAR(50),
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE SET NULL,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE SET NULL,
+        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE SET NULL,
+        FOREIGN KEY (id_device) REFERENCES Device(id_device) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla DeviceAssignment creada');
+  } else {
+    console.log('✓ Tabla DeviceAssignment ya existe');
+  }
+};
+
+/**
+ * Tabla SessionMeasurement - Mediciones de IoT
+ */
+const migrateSessionMeasurementTable = async () => {
+  console.log('🔄 Verificando tabla SessionMeasurement...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'SessionMeasurement'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla SessionMeasurement...');
+    await pool.query(`
+      CREATE TABLE SessionMeasurement (
+        id_session_measurement INT AUTO_INCREMENT PRIMARY KEY,
+        id_group INT NOT NULL,
+        start_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        end_ts TIMESTAMP NULL,
+        status ENUM('READY','IN_PROGRESS','COMPLETED') DEFAULT 'READY',
+        session_id_iot VARCHAR(100),
+        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla SessionMeasurement creada');
+  } else {
+    console.log('✓ Tabla SessionMeasurement ya existe');
+  }
+};
+
+/**
+ * Tabla ExperimentFeedback - Retroalimentación del docente/sistema
+ */
+const migrateExperimentFeedbackTable = async () => {
+  console.log('🔄 Verificando tabla ExperimentFeedback...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'ExperimentFeedback'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla ExperimentFeedback...');
+    await pool.query(`
+      CREATE TABLE ExperimentFeedback (
+        id_feedback INT AUTO_INCREMENT PRIMARY KEY,
+        id_experiment INT NOT NULL,
+        feedback_type VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES User(id_user) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla ExperimentFeedback creada');
+  } else {
+    console.log('✓ Tabla ExperimentFeedback ya existe');
+  }
+};
+
+/**
  * Ejecutar migraciones
  */
 export const runMigrations = async () => {
@@ -384,9 +697,15 @@ export const runMigrations = async () => {
     await migrateUserTable();
     await migrateUserAuthProvidersTable();
     await migrateUserSessionTable();
-    await migrateExperimentTable();
-    await migrateQuestionTable();
-    await migrateQuestionAlternativeTable();
+    await migrateUserExperienceResultTable();
+    await migrateUserExperienceTable();
+    await migrateUserPerformanceTable();
+    await migrateGroupTable();
+    await migrateUserGroupTable();
+    await migrateDeviceTable();
+    await migrateDeviceAssignmentTable();
+    await migrateSessionMeasurementTable();
+    await migrateExperimentFeedbackTable();
 
     console.log('\n✅ Todas las migraciones completadas exitosamente');
   } catch (error) {
