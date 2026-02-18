@@ -1,6 +1,17 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady } from '../controllers/userController.js';
+import {
+  getUserFeedback,
+  getTeamPerformance,
+  getMyPerformance,
+  getExperiencesByDate,
+  joinExperience,
+  getMyProfile,
+  getMyResults,
+  joinTeam,
+  getExperienceTeams,
+  setReady
+} from '../controllers/userController.js';
 
 const router = Router();
 
@@ -41,7 +52,7 @@ router.post(
 
 // USR-006: Ver mi desempeño
 router.get(
-  '/performance/:id_experiment',
+  '/performance/:id_experimento',
   authenticateToken,
   getMyPerformance
 );
@@ -60,5 +71,18 @@ router.post(
   setReady
 );
 
+// USR-009: Feedback
+router.get(
+  '/feedback/:id_experimento',
+  authenticateToken,
+  getUserFeedback
+);
+
+// USR-010: Desempeño del equipo
+router.get(
+  '/team-performance/:id_experimento/:id_group',
+  authenticateToken,
+  getTeamPerformance
+);
 
 export default router;
