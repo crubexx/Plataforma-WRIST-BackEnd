@@ -13,11 +13,12 @@ import {
   removeUserFromGroups,
   assignUserToGroup,
   getAssignedDevice,
-  getUserFeedback
 } from '../repositories/userRepository.js';
 
 import { pool } from '../config/database.js';
 
+import { getUserFeedback } from '../repositories/feedbackRepository.js';
+import { getTeamPerformance } from '../repositories/teamPerformanceRepository.js';
 import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
 
 export const joinExperienceService = async (
@@ -236,4 +237,71 @@ export const getUserFeedbackService = async (id_user, id_experimento) => {
   const feedback = await getUserFeedback(id_user, id_experimento);
 
   return feedback;
+};
+
+export const getTeamPerformanceService = async (
+  requesterRole,
+  requesterId,
+  id_experimento,
+  id_group
+) => {
+
+  // 1️⃣ Validar experiencia
+  const [exp] = await pool.query(
+    `SELECT estado, performance_visible FROM Experimento WHERE id_experimento = ?`,
+    [id_experimento]
+  );
+
+  if (!exp.length) {
+    throw new Error('La experiencia no existe');
+  }
+
+  if (exp[0].estado === 'PREPARATION') {
+    throw new Error('La experiencia aún no ha sido iniciada');
+  }
+
+  // 2️⃣ Si es usuario → validar que pertenezca al equipo
+  if (requesterRole === 'USUARIO') {
+    const [check] = await pool.query(
+      `
+      SELECT 1
+      FROM UserGroup ug
+      INNER JOIN Group g ON ug.id_group = g.id_group
+      WHERE ug.id_user = ?
+        AND ug.id_group = ?
+        AND g.id_experiment = ?
+      `,
+      [requesterId, id_group, id_experimento]
+    );
+
+    if (!check.length) {
+      throw new Error('No tiene acceso al desempeño de este equipo');
+    }
+  }
+
+  // 3️⃣ Si visualización bloqueada
+  if (!exp[0].performance_visible) {
+    return {
+      blocked: true,
+      message: 'Visualización desactivada por el docente'
+    };
+  }
+
+  // 4️⃣ Obtener métricas del equipo
+  const performance = await getTeamPerformance(id_group, id_experiment);
+
+  if (!performance || performance.total_time_seconds === null) {
+    throw new Error('No hay datos disponibles para este equipo');
+  }
+
+  return {
+    blocked: false,
+    performance: {
+      total_time_seconds: performance.total_time_seconds,
+      avg_stress_level: performance.avg_stress_level,
+      avg_productivity_level: performance.avg_productivity_level,
+      avg_phase_productivity: performance.avg_phase_productivity,
+      total_restarts: performance.total_restarts
+    }
+  };
 };

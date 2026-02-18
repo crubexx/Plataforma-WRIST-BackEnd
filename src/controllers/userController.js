@@ -1,4 +1,4 @@
-import { getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
+import { getTeamPerformanceService, getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -126,6 +126,30 @@ export const getUserFeedback = async (req, res) => {
     );
 
     return res.status(200).json(feedback);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-008: Ver desempeño de mi equipo
+export const getTeamPerformance = async (req, res) => {
+  try {
+    const requesterId = req.user.id_user;
+    const requesterRole = req.user.role;
+
+    const { id_experimento, id_group } = req.params;
+
+    const result = await getTeamPerformanceService(
+      requesterRole,
+      requesterId,
+      id_experimento,
+      id_group
+    );
+
+    return res.status(200).json(result);
 
   } catch (error) {
     return res.status(400).json({

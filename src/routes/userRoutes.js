@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam } from '../controllers/userController.js';
+import { getUserFeedback, getTeamPerformance, getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -51,6 +51,13 @@ router.get(
   '/feedback/:id_experimento',
   authenticateToken,
   getUserFeedback
+);
+
+// USR-008: 
+router.get(
+  '/team-performance/:id_experimento/:id_group',
+  authenticateToken,
+  getTeamPerformance
 );
 
 export default router;
