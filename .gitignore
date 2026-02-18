@@ -142,3 +142,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Temporary DB Check Scripts
+check_db.js
+src/config/check_db.js
+src/check_db_temp.js
