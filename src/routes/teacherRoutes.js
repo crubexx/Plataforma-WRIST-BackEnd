@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createExperience,
   getTeacherExperiences,
+  getExperienceById,
   getConnectedUsers,
   createGroup,
   assignDevice,
@@ -36,6 +37,13 @@ router.get(
   authenticateToken,
   authorizeTeacher,
   getTeacherExperiences
+);
+
+router.get(
+  '/experiences/:id',
+  authenticateToken,
+  authorizeTeacher,
+  getExperienceById
 );
 
 // DOE-003: Ver usuarios conectados
