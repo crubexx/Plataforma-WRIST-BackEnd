@@ -1,6 +1,6 @@
 import { pool } from '../config/database.js';
 
-export const getUserPerformance = async (id_user, id_experimento) => {
+export const getUserPerformance = async (id_user, id_experiment) => {
   const [rows] = await pool.query(
     `
     SELECT 
@@ -9,13 +9,13 @@ export const getUserPerformance = async (id_user, id_experimento) => {
       up.productivity_level,
       up.work_phase_productivity,
       up.restart_count,
-      e.estado,
+      e.status,
       e.performance_visible
     FROM UserPerformance up
-    INNER JOIN Experimento e ON up.id_experimento = e.id_experimento
-    WHERE up.id_user = ? AND up.id_experimento = ?
+    INNER JOIN Experiment e ON up.id_experiment = e.id_experiment
+    WHERE up.id_user = ? AND up.id_experiment = ?
     `,
-    [id_user, id_experimento]
+    [id_user, id_experiment]
   );
 
   return rows[0];

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam } from '../controllers/userController.js';
+import { getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -41,9 +41,23 @@ router.post(
 
 // USR-006: Ver mi desempeño
 router.get(
-  '/performance/:id_experimento',
+  '/performance/:id_experiment',
   authenticateToken,
   getMyPerformance
+);
+
+// USR-007: Ver equipos de una experiencia
+router.get(
+  '/experiences/:id_experiment/teams',
+  authenticateToken,
+  getExperienceTeams
+);
+
+// USR-008: Marcar como listo
+router.post(
+  '/set-ready',
+  authenticateToken,
+  setReady
 );
 
 
