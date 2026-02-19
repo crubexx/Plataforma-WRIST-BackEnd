@@ -161,12 +161,12 @@ export const joinTeamService = async (id_user, id_experiment, id_group) => {
   // 5️⃣ Asignar al nuevo equipo
   await assignUserToGroup(id_user, id_group);
 
-  // 6️⃣ Obtener dispositivo asignado
-  const device = await getAssignedDevice(id_user, id_experiment);
+  // 6️⃣ Obtener dispositivo asignado (TEMPORALMENTE DESHABILITADO)
+  // const device = await getAssignedDevice(id_user, id_experiment);
 
   return {
     message: 'Usuario asignado al equipo correctamente',
-    device: device ? device.device_code : 'Dispositivo aún no asignado'
+    device: 'Dispositivo aún no asignado (Simulado)' // device ? device.device_code : 'Dispositivo aún no asignado'
   };
 };
 

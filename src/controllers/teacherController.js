@@ -182,12 +182,13 @@ export const generateExperimentFeedback = async (req, res) => {
 export const createManualFeedback = async (req, res) => {
   try {
     const { id } = req.params;
-    const { message } = req.body;
+    const { message, id_user, id_group } = req.body;
 
     const result = await createManualFeedbackService(
       id,
       req.user.id_user,
-      message
+      message,
+      { id_user, id_group }
     );
 
     return res.status(201).json(result);
