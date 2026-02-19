@@ -672,11 +672,15 @@ const migrateExperimentFeedbackTable = async () => {
       CREATE TABLE ExperimentFeedback (
         id_feedback INT AUTO_INCREMENT PRIMARY KEY,
         id_experiment INT NOT NULL,
+        id_user INT NULL,
+        id_group INT NULL,
         feedback_type VARCHAR(50) NOT NULL,
         message TEXT NOT NULL,
         created_by INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE,
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE SET NULL,
+        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE SET NULL,
         FOREIGN KEY (created_by) REFERENCES User(id_user) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);

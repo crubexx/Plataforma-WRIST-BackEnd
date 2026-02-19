@@ -287,7 +287,8 @@ export const generateExperimentFeedbackService = async (
 export const createManualFeedbackService = async (
   experimentId,
   teacherId,
-  message
+  message,
+  data = {}
 ) => {
   if (!message || message.length < 5) {
     throw new Error('La retroalimentación es obligatoria');
@@ -297,7 +298,8 @@ export const createManualFeedbackService = async (
     experimentId,
     'TEACHER_FEEDBACK',
     message,
-    teacherId
+    teacherId,
+    data
   );
 
   return {

@@ -243,7 +243,8 @@ export const createExperimentFeedbackRepository = async (
   experimentId,
   type,
   message,
-  teacherId
+  teacherId,
+  data = {}
 ) => {
   const [result] = await pool.query(
     `
