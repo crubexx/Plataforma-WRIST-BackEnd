@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register, logout, recover, reset, googleAuth } from '../controllers/authController.js';
+import { login, register, logout, recover, reset, googleAuth, completeGoogleProfile } from '../controllers/authController.js';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -19,5 +19,11 @@ router.post('/reset-password', reset);
 
 // ACC-005: Autenticación con Google
 router.post('/google', googleAuth);
+
+router.post(
+  '/google/complete-profile',
+  authenticateToken,
+  completeGoogleProfile
+);
 
 export default router;

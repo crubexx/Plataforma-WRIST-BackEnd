@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendResetPasswordEmail } from '../utils/mailService.js';
-import { findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
+import { updateGoogleUserData, findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
 import { isValidRut } from '../utils/rutValidator.js';
 //import { registerUserSession, deactivateUserSession } from '../repositories/sessionRepository.js';
 
@@ -226,4 +226,59 @@ export const resetPassword = async (token, newPassword) => {
   await updatePassword(user.id_user, password_hash);
 
   return { message: 'Contraseña actualizada correctamente' };
+};
+
+export const completeGoogleRegistration = async (
+  id_user,
+  rut,
+  gender,
+  date_of_birth
+) => {
+
+  if (!rut) throw new Error('Falta completar el campo RUT');
+  if (!gender) throw new Error('Falta completar el campo Género');
+  if (!date_of_birth) throw new Error('Falta completar el campo Fecha de nacimiento');
+
+  // Validación formato RUT
+  const rutRegex = /^\d{7,8}[0-9Kk]$/;
+  if (!rutRegex.test(rut)) {
+    throw new Error('El RUT debe ingresarse sin puntos ni guión');
+  }
+
+  if (!isValidRut(rut)) {
+    throw new Error('El RUT ingresado no es válido');
+  }
+
+  const existingRut = await findUserByRut(rut);
+  if (existingRut) {
+    throw new Error('El RUT ya se encuentra registrado');
+  }
+
+  // Calcular edad
+  const birthDate = new Date(date_of_birth);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || 
+     (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < 16) {
+    throw new Error('Debe tener al menos 16 años para registrarse');
+  }
+
+  await updateGoogleUserData(
+    id_user,
+    rut,
+    gender,
+    date_of_birth
+  );
+
+  return {
+    message: 'Registro completado correctamente',
+    age
+  };
 };
