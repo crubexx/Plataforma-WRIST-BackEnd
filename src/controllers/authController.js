@@ -1,4 +1,4 @@
-import { loginUser, registerUser, recoverPassword, resetPassword, logoutUserService } from '../services/authService.js';
+import { loginUser, registerUser, recoverPassword, resetPassword, logoutUserService, completeGoogleRegistration } from '../services/authService.js';
 import { authenticateWithGoogle } from '../services/googleAuthService.js';
 
 
@@ -121,3 +121,26 @@ export const googleAuth = async (req, res) => {
     });
   }
 };
+
+export const completeGoogleProfile = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+
+    const { rut, gender, date_of_birth } = req.body;
+
+    const result = await completeGoogleRegistration(
+      id_user,
+      rut,
+      gender,
+      date_of_birth
+    );
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+

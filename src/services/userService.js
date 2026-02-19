@@ -207,16 +207,6 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
   };
 };
 
-// Lobby & Teams
-
-export const getExperienceTeamsService = async (experimentId) => {
-  return await getTeamsByExperimentRepository(experimentId);
-};
-
-export const setUserReadyService = async (id_user, id_experiment) => {
-  await setUserReady(id_user, id_experiment);
-  return { message: 'Estado actualizado a LISTO' };
-};
 
 export const getUserFeedbackService = async (id_user, id_experimento) => {
 
@@ -318,4 +308,14 @@ export const getTeamPerformanceService = async (
       total_restarts: performance.total_restarts
     }
   };
+};
+// Lobby & Teams
+
+export const getExperienceTeamsService = async (experimentId) => {
+  return await getTeamsByExperimentRepository(experimentId);
+};
+
+export const setUserReadyService = async (id_user, id_experiment) => {
+  await setUserReady(id_user, id_experiment);
+  return { message: 'Estado actualizado a LISTO' };
 };

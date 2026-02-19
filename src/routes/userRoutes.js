@@ -1,17 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import {
-  getUserFeedback,
-  getTeamPerformance,
-  getMyPerformance,
-  getExperiencesByDate,
-  joinExperience,
-  getMyProfile,
-  getMyResults,
-  joinTeam,
-  getExperienceTeams,
-  setReady
-} from '../controllers/userController.js';
+import { getUserFeedback, getTeamPerformance, getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -57,6 +46,20 @@ router.get(
   getMyPerformance
 );
 
+// USR-007: Feedback
+router.get(
+  '/feedback/:id_experimento',
+  authenticateToken,
+  getUserFeedback
+);
+
+// USR-008: 
+router.get(
+  '/team-performance/:id_experimento/:id_group',
+  authenticateToken,
+  getTeamPerformance
+);
+
 // USR-007: Ver equipos de una experiencia
 router.get(
   '/experiences/:id_experiment/teams',
@@ -69,20 +72,6 @@ router.post(
   '/set-ready',
   authenticateToken,
   setReady
-);
-
-// USR-009: Feedback
-router.get(
-  '/feedback/:id_experimento',
-  authenticateToken,
-  getUserFeedback
-);
-
-// USR-010: Desempeño del equipo
-router.get(
-  '/team-performance/:id_experimento/:id_group',
-  authenticateToken,
-  getTeamPerformance
 );
 
 export default router;

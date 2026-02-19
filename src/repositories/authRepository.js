@@ -141,3 +141,19 @@ export const getUserWithProvider = async (provider, providerUserId) => {
   );
   return rows.length > 0 ? rows[0] : null;
 };
+
+export const updateGoogleUserData = async (
+  id_user,
+  rut,
+  gender,
+  date_of_birth
+) => {
+  await pool.query(
+    `
+    UPDATE User
+    SET rut = ?, gender = ?, date_of_birth = ?
+    WHERE id_user = ?
+    `,
+    [rut, gender, date_of_birth, id_user]
+  );
+};
