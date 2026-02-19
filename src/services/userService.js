@@ -1,5 +1,5 @@
-import { 
-  getExperiencesByDateRepository, 
+import {
+  getExperiencesByDateRepository,
   findExperienceById,
   countParticipants,
   isUserAlreadyJoined,
@@ -13,6 +13,8 @@ import {
   removeUserFromGroups,
   assignUserToGroup,
   getAssignedDevice,
+  setUserReady,
+  getTeamsByExperimentRepository,
 } from '../repositories/userRepository.js';
 
 import { pool } from '../config/database.js';
@@ -22,51 +24,52 @@ import { getTeamPerformance } from '../repositories/teamPerformanceRepository.js
 import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
 
 export const joinExperienceService = async (
-  id_experience,
+  id_experiment,
   access_code,
   id_user
 ) => {
-  const experience = await findExperienceById(id_experience);
+  const experience = await findExperienceById(id_experiment);
 
   if (!experience) {
-    throw new Error('La experiencia no existe');
+    throw new Error('La experiencia no existe o ya no está disponible');
   }
 
-  // 1️⃣ Estado
-  if (experience.status !== 'EN_PREPARATION') {
-    throw new Error('La experiencia no está disponible para ingreso');
+  // 1️⃣ Estado: Permitir CREATED o EN_PREPARATION
+  const allowedStatuses = ['CREATED', 'EN_PREPARATION'];
+  if (!allowedStatuses.includes(experience.status)) {
+    throw new Error('La experiencia no se encuentra en una etapa de ingreso de participantes');
   }
 
-  // 2️⃣ Código
+  // 2️⃣ Código - Validate against database field
   if (experience.access_code !== access_code) {
-    throw new Error('El código ingresado es incorrecto');
+    throw new Error('El código de acceso ingresado es incorrecto');
   }
 
   // 3️⃣ Ya unido
-  if (await isUserAlreadyJoined(id_experience, id_user)) {
+  if (await isUserAlreadyJoined(id_experiment, id_user)) {
     throw new Error('Ya te encuentras inscrito en esta experiencia');
   }
 
   // 4️⃣ Capacidad
-  const total = await countParticipants(id_experience);
+  const total = await countParticipants(id_experiment);
   if (total >= experience.max_participants) {
-    throw new Error('La experiencia ya alcanzó el máximo de participantes');
+    throw new Error('La experiencia ya alcanzó el máximo de participantes permitidos');
   }
 
   // 5️⃣ Registrar participación
-  await joinExperience(id_experience, id_user);
+  await joinExperience(id_experiment, id_user);
 
   return {
-    message: 'Te has unido a la experiencia correctamente'
+    message: 'Te has unido a la experiencia correctamente',
+    id_experiment: id_experiment
   };
 };
 export const getExperiencesByDateService = async (date) => {
   const experiences = await getExperiencesByDateRepository(date);
 
-  if (!experiences.length) {
-    return {
-      message: 'No se han realizado experimentos para el día seleccionado'
-    };
+  // Return empty array if no experiences (frontend expects array)
+  if (!experiences || !experiences.length) {
+    return [];
   }
 
   return experiences.map(exp => ({
@@ -75,7 +78,7 @@ export const getExperiencesByDateService = async (date) => {
     status: exp.status,
     participants: exp.participants_count,
     max_participants: exp.max_participants,
-    can_enter_code: exp.status === 'PREPARATION'
+    can_enter_code: exp.status === 'EN_PREPARATION' // Fixed: was 'CREATED'
   }));
 };
 
@@ -119,7 +122,7 @@ export const getUserResultsService = async (id_user) => {
     },
     experiences: results.map(r => ({
       experience_name: r.experience_name,
-      status: r.estado,
+      status: r.status,
       productivity_score: r.productivity_score,
       stress_level: r.stress_level,
       feedback: r.feedback,
@@ -128,17 +131,17 @@ export const getUserResultsService = async (id_user) => {
   };
 };
 
-export const joinTeamService = async (id_user, id_experimento, id_group) => {
+export const joinTeamService = async (id_user, id_experiment, id_group) => {
 
   // 1️⃣ Usuario debe estar inscrito en la experiencia
-  const enrolled = await isUserInExperience(id_user, id_experimento);
+  const enrolled = await isUserInExperience(id_user, id_experiment);
   if (!enrolled) {
     throw new Error('El usuario no está inscrito en la experiencia');
   }
 
-  // 2️⃣ Experiencia debe estar en PREPARATION
-  const exp = await getExperimentStatus(id_experimento);
-  if (!exp || exp.estado !== 'PREPARATION') {
+  // 2️⃣ Experiencia debe estar en CREATED
+  const exp = await getExperimentStatus(id_experiment);
+  if (!exp || exp.status !== 'CREATED') {
     throw new Error('No es posible cambiar de equipo en esta etapa');
   }
 
@@ -153,13 +156,13 @@ export const joinTeamService = async (id_user, id_experimento, id_group) => {
   }
 
   // 4️⃣ Quitar de otros equipos (permite cambiar durante preparación)
-  await removeUserFromGroups(id_user, id_experimento);
+  await removeUserFromGroups(id_user, id_experiment);
 
   // 5️⃣ Asignar al nuevo equipo
   await assignUserToGroup(id_user, id_group);
 
   // 6️⃣ Obtener dispositivo asignado
-  const device = await getAssignedDevice(id_user, id_experimento);
+  const device = await getAssignedDevice(id_user, id_experiment);
 
   return {
     message: 'Usuario asignado al equipo correctamente',
@@ -169,9 +172,9 @@ export const joinTeamService = async (id_user, id_experimento, id_group) => {
 
 // Performance
 
-export const getMyPerformanceService = async (id_user, id_experimento) => {
+export const getMyPerformanceService = async (id_user, id_experiment) => {
 
-  const data = await getUserPerformance(id_user, id_experimento);
+  const data = await getUserPerformance(id_user, id_experiment);
 
   // 1️⃣ No hay datos
   if (!data) {
@@ -179,7 +182,7 @@ export const getMyPerformanceService = async (id_user, id_experimento) => {
   }
 
   // 2️⃣ Experiencia no iniciada
-  if (data.estado === 'PREPARATION') {
+  if (data.status === 'CREATED') {
     throw new Error('La experiencia aún no ha sido iniciada');
   }
 
@@ -304,4 +307,14 @@ export const getTeamPerformanceService = async (
       total_restarts: performance.total_restarts
     }
   };
+};
+// Lobby & Teams
+
+export const getExperienceTeamsService = async (experimentId) => {
+  return await getTeamsByExperimentRepository(experimentId);
+};
+
+export const setUserReadyService = async (id_user, id_experiment) => {
+  await setUserReady(id_user, id_experiment);
+  return { message: 'Estado actualizado a LISTO' };
 };

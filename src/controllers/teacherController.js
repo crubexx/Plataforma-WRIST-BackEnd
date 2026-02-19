@@ -9,11 +9,12 @@ import {
   cancelExperienceService,
   getExperienceQuestionsService,
   getExperienceMetricsService,
-  getExperienceTeamsService,
   updateVisualizationModeService,
   generateExperimentFeedbackService,
-  createManualFeedbackService
+  createManualFeedbackService,
+  getExperienceByIdService
 } from '../services/teacherService.js';
+import { getTeamsByExperimentRepository } from '../repositories/teacherRepository.js';
 
 // DOE-001: Crear experiencia
 export const createExperience = async (req, res) => {
@@ -39,6 +40,20 @@ export const getTeacherExperiences = async (req, res) => {
     console.error('Error DOE-002:', error);
     return res.status(500).json({
       message: 'Error al obtener historial de experiencias'
+    });
+  }
+};
+
+export const getExperienceById = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const experiment = await getExperienceByIdService(experimentId, teacherId);
+    return res.status(200).json(experiment);
+  } catch (error) {
+    return res.status(404).json({
+      message: error.message
     });
   }
 };
@@ -112,14 +127,18 @@ export const getExperienceMetrics = async (req, res) => {
 // DOC-007: Visualizar equipos
 export const getExperienceTeams = async (req, res) => {
   try {
-    const teacherId = req.user.id_user;
     const { id } = req.params;
 
-    const teams = await getExperienceTeamsService(id, teacherId);
+    console.log('🔍 Teacher DOE-007: Solicitando equipos para experiencia:', id);
+
+    const teams = await getTeamsByExperimentRepository(id);
+
+    console.log('✅ Equipos obtenidos (teacher):', teams.length);
+    console.log('📊 Detalle:', JSON.stringify(teams, null, 2));
 
     return res.status(200).json(teams);
   } catch (error) {
-    console.error('DOE-007:', error.message);
+    console.error('❌ Error DOE-007:', error.message);
     return res.status(400).json({ message: error.message });
   }
 };

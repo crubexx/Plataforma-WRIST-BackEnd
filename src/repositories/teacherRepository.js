@@ -5,7 +5,8 @@ export const createExperienceRepository = async ({
   description,
   duration,
   user_id,
-  questions
+  questions,
+  access_code
 }) => {
   const connection = await pool.getConnection();
 
@@ -16,11 +17,11 @@ export const createExperienceRepository = async ({
     const [result] = await connection.query(
       `
       INSERT INTO Experiment
-        (name, description, duration, status, created_by, created_at)
+        (name, description, duration, status, created_by, access_code, created_at)
       VALUES
-        (?, ?, ?, 'CREATED', ?, NOW())
+        (?, ?, ?, 'CREATED', ?, ?, NOW())
       `,
-      [name, description, duration || null, user_id]
+      [name, description, duration || null, user_id, access_code]
     );
 
     const experimentId = result.insertId;
@@ -80,6 +81,8 @@ export const getTeacherExperiencesRepository = async (teacherId) => {
       description,
       status,
       created_by,
+      access_code,
+      duration,
       created_at
     FROM Experiment
     WHERE created_by = ?
@@ -114,7 +117,7 @@ export const findExperimentByIdAndTeacher = async (
 ) => {
   const [rows] = await pool.query(
     `
-    SELECT id_experiment, status
+    SELECT id_experiment, status, name, access_code, duration
     FROM Experiment
     WHERE id_experiment = ?
       AND created_by = ?
@@ -172,37 +175,48 @@ export const getTeamsByExperimentRepository = async (experimentId) => {
     SELECT
       g.id_group,
       g.name AS team_name,
+      g.capacity,
       u.id_user,
-      CONCAT(u.first_name, ' ', u.last_name) AS member_name
+      u.first_name,
+      u.last_name,
+      ue.is_ready
     FROM \`Group\` g
     LEFT JOIN UserGroup ug ON g.id_group = ug.id_group
     LEFT JOIN User u ON ug.id_user = u.id_user
+    LEFT JOIN UserExperience ue ON (u.id_user = ue.id_user AND g.id_experiment = ue.id_experiment)
     WHERE g.id_experiment = ?
-    ORDER BY g.id_group ASC
+    ORDER BY g.id_group ASC, u.id_user ASC
   `, [experimentId]);
 
-  // Agrupar por equipo
   const teamsMap = {};
 
   rows.forEach(row => {
     if (!teamsMap[row.id_group]) {
       teamsMap[row.id_group] = {
-        team: row.team_name,
+        id: row.id_group.toString(),
+        name: row.team_name,
+        maxMembers: row.capacity || 3,
+        currentMembers: 0,
         members: []
       };
     }
 
-    if (row.member_name) {
-      teamsMap[row.id_group].members.push(row.member_name);
+    if (row.id_user) {
+      teamsMap[row.id_group].currentMembers++;
+
+      const firstName = row.first_name || 'Participante';
+      const lastName = row.last_name || '';
+
+      teamsMap[row.id_group].members.push({
+        id: row.id_user.toString(),
+        name: `${firstName} ${lastName}`.trim(),
+        initials: `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ''}`.toUpperCase(),
+        isReady: row.is_ready === 1
+      });
     }
   });
 
-  // Formato final
-  return Object.values(teamsMap).map(team => ({
-    team: team.team,
-    total_members: team.members.length,
-    members: team.members
-  }));
+  return Object.values(teamsMap);
 };
 
 // DOE-008: Administrar visualización

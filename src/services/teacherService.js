@@ -48,18 +48,32 @@ export const createExperienceService = async (data, user) => {
     }
   }
 
+  // Generate random 6-digit access code
+  const access_code = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log('🔑 Generated access code for experience:', access_code);
+
   const experienceId = await createExperienceRepository({
     name,
     description,
     duration,
     user_id: user.id_user,
-    questions
+    questions,
+    access_code
   });
 
   return {
     message: 'Experiencia creada correctamente',
-    experienceId
+    experienceId,
+    access_code
   };
+};
+
+export const getExperienceByIdService = async (experimentId, teacherId) => {
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+  if (!experiment) {
+    throw new Error('Experiencia no encontrada o no tienes permisos');
+  }
+  return experiment;
 };
 
 // DOE-002: Ver historial de experiencias del docente
@@ -164,7 +178,9 @@ export const getExperienceMetricsService = async (experimentId, teacherId) => {
     experiment: {
       id: experiment.id_experiment,
       name: experiment.name,
-      status: experiment.status
+      status: experiment.status,
+      access_code: experiment.access_code,
+      duration: experiment.duration
     },
     metrics
   };

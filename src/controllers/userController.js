@@ -1,4 +1,4 @@
-import { getTeamPerformanceService, getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
+import { getExperienceTeamsService, setUserReadyService, getTeamPerformanceService, getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -80,14 +80,18 @@ export const joinTeam = async (req, res) => {
     const id_user = req.user.id_user;
     const { id_experimento, id_group } = req.body;
 
+    console.log('👥 USR-005: Usuario', id_user, 'uniéndose al equipo', id_group, 'en experiencia', id_experimento);
+
     const result = await joinTeamService(
       id_user,
       id_experimento,
       id_group
     );
 
+    console.log('✅ Usuario unido exitosamente');
     return res.status(200).json(result);
   } catch (error) {
+    console.error('❌ Error en joinTeam:', error);
     return res.status(400).json({
       message: error.message
     });
@@ -152,6 +156,47 @@ export const getTeamPerformance = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-007: Ver equipos de una experiencia
+export const getExperienceTeams = async (req, res) => {
+  try {
+    const { id_experiment } = req.params;
+    console.log('🔍 USR-007: Solicitando equipos para experiencia:', id_experiment);
+    console.log('📋 Parámetros completos:', req.params);
+    console.log('🔐 Usuario autenticado:', req.user ? req.user.id_user : 'NO AUTH');
+
+    const teams = await getExperienceTeamsService(id_experiment);
+
+    console.log('✅ Equipos obtenidos:', teams.length, 'equipos');
+    console.log('📊 Detalle:', JSON.stringify(teams, null, 2));
+
+    return res.status(200).json(teams);
+  } catch (error) {
+    console.error('❌ Error en getExperienceTeams:', error);
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-008: Marcar como listo
+export const setReady = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experimento } = req.body;
+    console.log('✋ USR-008: Usuario', id_user, 'marcándose listo en experiencia', id_experimento);
+
+    const result = await setUserReadyService(id_user, id_experimento);
+    console.log('✅ Usuario marcado como listo');
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('❌ Error en setReady:', error);
     return res.status(400).json({
       message: error.message
     });
