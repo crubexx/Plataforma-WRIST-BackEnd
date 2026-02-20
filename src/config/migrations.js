@@ -242,6 +242,7 @@ const migrateExperimentTable = async () => {
         status ENUM('CREATED','EN_PREPARATION','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'CREATED',
         created_by INT NOT NULL,
         visualization_mode ENUM('INDIVIDUAL', 'TEAM', 'MIXED') DEFAULT 'INDIVIDUAL',
+        perfomance_visible BOOLEAN DEFAULT TRUE,
         start_date DATETIME COMMENT 'Fecha y hora de inicio',
         end_date DATETIME COMMENT 'Fecha y hora de finalización',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
