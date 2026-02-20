@@ -16,6 +16,7 @@ export const getTeamPerformance = async (id_group, id_experiment) => {
     INNER JOIN Experiment e ON up.id_experiment = e.id_experiment
     WHERE ug.id_group = ?
       AND up.id_experiment = ?
+    GROUP BY e.status, e.performance_visible
     `,
     [id_group, id_experiment]
   );
