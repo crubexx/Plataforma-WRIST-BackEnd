@@ -165,10 +165,9 @@ export const assignUserToGroup = async (id_user, id_group) => {
 export const getAssignedDevice = async (id_user, id_experiment) => {
   const [rows] = await pool.query(
     `
-    SELECT d.device_code
-    FROM DeviceAssignment da
-    INNER JOIN Device d ON da.id_device = d.id_device
-    WHERE da.id_user = ? AND da.id_experiment = ?
+    SELECT external_device_id
+    FROM DeviceAssignment
+    WHERE id_user = ? AND id_experiment = ?
     `,
     [id_user, id_experiment]
   );
