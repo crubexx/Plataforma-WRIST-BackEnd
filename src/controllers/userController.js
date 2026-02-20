@@ -129,6 +129,50 @@ export const getMyPerformance = async (req, res) => {
   }
 };
 
+// USR-007: Ver feedback
+export const getUserFeedback = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experimento } = req.params;
+
+    const feedback = await getUserFeedbackService(
+      id_user,
+      id_experimento
+    );
+
+    return res.status(200).json(feedback);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-008: Ver desempeño de mi equipo
+export const getTeamPerformance = async (req, res) => {
+  try {
+    const requesterId = req.user.id_user;
+    const requesterRole = req.user.role;
+
+    const { id_experimento, id_group } = req.params;
+
+    const result = await getTeamPerformanceService(
+      requesterRole,
+      requesterId,
+      id_experimento,
+      id_group
+    );
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
 // USR-007: Ver equipos de una experiencia
 export const getExperienceTeams = async (req, res) => {
   try {

@@ -34,29 +34,29 @@ export const joinExperienceService = async (
     throw new Error('La experiencia no existe o ya no está disponible');
   }
 
-  // 1️⃣ Estado: Permitir CREATED o EN_PREPARATION
+  // Estado: Permitir CREATED o EN_PREPARATION
   const allowedStatuses = ['CREATED', 'EN_PREPARATION'];
   if (!allowedStatuses.includes(experience.status)) {
     throw new Error('La experiencia no se encuentra en una etapa de ingreso de participantes');
   }
 
-  // 2️⃣ Código - Validate against database field
+  // Código - Validate against database field
   if (experience.access_code !== access_code) {
     throw new Error('El código de acceso ingresado es incorrecto');
   }
 
-  // 3️⃣ Ya unido
+  // Ya unido
   if (await isUserAlreadyJoined(id_experiment, id_user)) {
     throw new Error('Ya te encuentras inscrito en esta experiencia');
   }
 
-  // 4️⃣ Capacidad
+  // Capacidad
   const total = await countParticipants(id_experiment);
   if (total >= experience.max_participants) {
     throw new Error('La experiencia ya alcanzó el máximo de participantes permitidos');
   }
 
-  // 5️⃣ Registrar participación
+  // Registrar participación
   await joinExperience(id_experiment, id_user);
 
   return {
@@ -133,19 +133,19 @@ export const getUserResultsService = async (id_user) => {
 
 export const joinTeamService = async (id_user, id_experiment, id_group) => {
 
-  // 1️⃣ Usuario debe estar inscrito en la experiencia
+  // Usuario debe estar inscrito en la experiencia
   const enrolled = await isUserInExperience(id_user, id_experiment);
   if (!enrolled) {
     throw new Error('El usuario no está inscrito en la experiencia');
   }
 
-  // 2️⃣ Experiencia debe estar en CREATED
+  // Experiencia debe estar en CREATED
   const exp = await getExperimentStatus(id_experiment);
   if (!exp || exp.status !== 'CREATED') {
     throw new Error('No es posible cambiar de equipo en esta etapa');
   }
 
-  // 3️⃣ Capacidad del equipo
+  // Capacidad del equipo
   const group = await getGroupInfo(id_group);
   if (!group) {
     throw new Error('Equipo no encontrado');
@@ -155,13 +155,13 @@ export const joinTeamService = async (id_user, id_experiment, id_group) => {
     throw new Error('El equipo ha alcanzado su capacidad máxima');
   }
 
-  // 4️⃣ Quitar de otros equipos (permite cambiar durante preparación)
+  // Quitar de otros equipos (permite cambiar durante preparación)
   await removeUserFromGroups(id_user, id_experiment);
 
-  // 5️⃣ Asignar al nuevo equipo
+  // Asignar al nuevo equipo
   await assignUserToGroup(id_user, id_group);
 
-  // 6️⃣ Obtener dispositivo asignado
+  // Obtener dispositivo asignado
   const device = await getAssignedDevice(id_user, id_experiment);
 
   return {
@@ -176,17 +176,17 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
 
   const data = await getUserPerformance(id_user, id_experiment);
 
-  // 1️⃣ No hay datos
+  // No hay datos
   if (!data) {
     throw new Error('La experiencia no ha sido iniciada');
   }
 
-  // 2️⃣ Experiencia no iniciada
+  // Experiencia no iniciada
   if (data.status === 'CREATED') {
     throw new Error('La experiencia aún no ha sido iniciada');
   }
 
-  // 3️⃣ Visualización bloqueada por docente
+  // Visualización bloqueada por docente
   if (!data.performance_visible) {
     return {
       blocked: true,
@@ -194,7 +194,7 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
     };
   }
 
-  // 4️⃣ Mostrar desempeño
+  // Mostrar desempeño
   return {
     blocked: false,
     performance: {
@@ -220,7 +220,7 @@ export const setUserReadyService = async (id_user, id_experiment) => {
 
 export const getUserFeedbackService = async (id_user, id_experimento) => {
 
-  // 1️⃣ Verificar estado del experimento
+  // Verificar estado del experimento
   const [exp] = await pool.query(
     `SELECT estado FROM Experimento WHERE id_experimento = ?`,
     [id_experimento]
@@ -234,7 +234,7 @@ export const getUserFeedbackService = async (id_user, id_experimento) => {
     throw new Error('El feedback solo está disponible cuando la experiencia está en progreso');
   }
 
-  // 2️⃣ Verificar que el usuario esté en un equipo
+  // Verificar que el usuario esté en un equipo
   const [teamCheck] = await pool.query(
     `
     SELECT 1 FROM GrupoUsuario gu
@@ -260,7 +260,7 @@ export const getTeamPerformanceService = async (
   id_group
 ) => {
 
-  // 1️⃣ Validar experiencia
+  // Validar experiencia
   const [exp] = await pool.query(
     `SELECT estado, performance_visible FROM Experimento WHERE id_experimento = ?`,
     [id_experimento]
@@ -274,7 +274,7 @@ export const getTeamPerformanceService = async (
     throw new Error('La experiencia aún no ha sido iniciada');
   }
 
-  // 2️⃣ Si es usuario → validar que pertenezca al equipo
+  // Si es usuario → validar que pertenezca al equipo
   if (requesterRole === 'USUARIO') {
     const [check] = await pool.query(
       `
@@ -293,7 +293,7 @@ export const getTeamPerformanceService = async (
     }
   }
 
-  // 3️⃣ Si visualización bloqueada
+  // Si visualización bloqueada
   if (!exp[0].performance_visible) {
     return {
       blocked: true,
@@ -301,7 +301,7 @@ export const getTeamPerformanceService = async (
     };
   }
 
-  // 4️⃣ Obtener métricas del equipo
+  // Obtener métricas del equipo
   const performance = await getTeamPerformance(id_group, id_experimento);
 
   if (!performance || performance.total_time_seconds === null) {
