@@ -180,7 +180,8 @@ export const getExperienceMetricsService = async (experimentId, teacherId) => {
       name: experiment.name,
       status: experiment.status,
       access_code: experiment.access_code,
-      duration: experiment.duration
+      duration: experiment.duration,
+      started_at: experiment.start_date
     },
     metrics
   };

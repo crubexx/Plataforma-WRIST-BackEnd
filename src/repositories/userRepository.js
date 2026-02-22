@@ -1,22 +1,25 @@
 import { pool } from '../config/database.js';
 
-export const getExperiencesByDateRepository = async (date) => {
+export const getExperiencesByDateRepository = async (date, id_user) => {
   const [rows] = await pool.query(`
     SELECT
       e.id_experiment,
       e.name,
+      e.description,
       e.status,
       e.start_date,
       e.end_date,
+      e.duration,
       e.max_participants,
-      COUNT(ug.id_user) AS participants_count
+      COUNT(DISTINCT ug.id_user) AS participants_count,
+      EXISTS(SELECT 1 FROM UserExperience ue WHERE ue.id_experiment = e.id_experiment AND ue.id_user = ?) AS is_joined
     FROM Experiment e
     LEFT JOIN \`Group\` g ON g.id_experiment = e.id_experiment
     LEFT JOIN UserGroup ug ON ug.id_group = g.id_group
     WHERE DATE(COALESCE(e.start_date, e.created_at)) = ?
     GROUP BY e.id_experiment
     ORDER BY COALESCE(e.start_date, e.created_at) DESC
-  `, [date]);
+  `, [id_user, date]);
 
   return rows;
 };
@@ -240,4 +243,35 @@ export const getTeamsByExperimentRepository = async (experimentId) => {
   console.log('📋 Equipos finales:', JSON.stringify(result, null, 2));
 
   return result;
+};
+
+export const getExperienceQuestions = async (experimentId) => {
+  const [questions] = await pool.query(`
+    SELECT id_question, question_text, question_order
+    FROM Question
+    WHERE id_experiment = ?
+    ORDER BY question_order ASC
+  `, [experimentId]);
+
+  for (let q of questions) {
+    const [alternatives] = await pool.query(`
+      SELECT id_alternative, alternative_text, alternative_order
+      FROM QuestionAlternative
+      WHERE id_question = ?
+      ORDER BY alternative_order ASC
+    `, [q.id_question]);
+    q.alternatives = alternatives;
+  }
+
+  return questions;
+};
+
+export const saveUserAnswer = async (id_user, id_experiment, id_question, id_alternative, text_answer) => {
+  await pool.query(`
+    INSERT INTO UserAnswer (id_user, id_experiment, id_question, id_alternative, text_answer)
+    VALUES (?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE 
+      id_alternative = VALUES(id_alternative),
+      text_answer = VALUES(text_answer)
+  `, [id_user, id_experiment, id_question, id_alternative, text_answer]);
 };

@@ -1,4 +1,4 @@
-import { getExperienceTeamsService, setUserReadyService, getTeamPerformanceService, getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService } from '../services/userService.js';
+import { getExperienceTeamsService, setUserReadyService, getTeamPerformanceService, getUserFeedbackService, getMyPerformanceService, getExperiencesByDateService, joinExperienceService, getUserProfileService, getUserResultsService, joinTeamService, getExperienceQuestionsService, saveUserAnswersService } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
   try {
@@ -10,7 +10,9 @@ export const getExperiencesByDate = async (req, res) => {
       });
     }
 
-    const result = await getExperiencesByDateService(date);
+    const id_user = req.user.id_user;
+
+    const result = await getExperiencesByDateService(date, id_user);
     return res.status(200).json(result);
   } catch (error) {
     console.error('USR-001 Error:', error);
@@ -197,6 +199,37 @@ export const setReady = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     console.error('❌ Error en setReady:', error);
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+export const getExperienceQuestions = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experiment } = req.params;
+
+    const questions = await getExperienceQuestionsService(id_experiment, id_user);
+
+    return res.status(200).json(questions);
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+export const submitExperienceAnswers = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experiment } = req.params;
+    const { answers } = req.body;
+
+    const result = await saveUserAnswersService(id_experiment, id_user, answers);
+
+    return res.status(200).json(result);
+  } catch (error) {
     return res.status(400).json({
       message: error.message
     });

@@ -10,7 +10,8 @@ export const getUserPerformance = async (id_user, id_experiment) => {
       up.work_phase_productivity,
       up.restart_count,
       e.status,
-      e.performance_visible
+      e.performance_visible,
+      e.start_date
     FROM UserPerformance up
     INNER JOIN Experiment e ON up.id_experiment = e.id_experiment
     WHERE up.id_user = ? AND up.id_experiment = ?

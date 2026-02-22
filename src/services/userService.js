@@ -15,9 +15,9 @@ import {
   getAssignedDevice,
   setUserReady,
   getTeamsByExperimentRepository,
-} from '../repositories/userRepository.js';
-
-import { pool } from '../config/database.js';
+  getExperienceQuestions,
+  saveUserAnswer
+} from '../repositories/userRepository.js'; import { pool } from '../config/database.js';
 
 import { getUserFeedback } from '../repositories/feedbackRepository.js';
 import { getTeamPerformance } from '../repositories/teamPerformanceRepository.js';
@@ -64,8 +64,8 @@ export const joinExperienceService = async (
     id_experiment: id_experiment
   };
 };
-export const getExperiencesByDateService = async (date) => {
-  const experiences = await getExperiencesByDateRepository(date);
+export const getExperiencesByDateService = async (date, userId) => {
+  const experiences = await getExperiencesByDateRepository(date, userId);
 
   // Return empty array if no experiences (frontend expects array)
   if (!experiences || !experiences.length) {
@@ -75,10 +75,14 @@ export const getExperiencesByDateService = async (date) => {
   return experiences.map(exp => ({
     id_experiment: exp.id_experiment,
     name: exp.name,
+    description: exp.description,
     status: exp.status,
+    start_date: exp.start_date,
+    duration: exp.duration,
     participants: exp.participants_count,
     max_participants: exp.max_participants,
-    can_enter_code: exp.status === 'EN_PREPARATION' // Fixed: was 'CREATED'
+    can_enter_code: exp.status === 'EN_PREPARATION', // Fixed: was 'CREATED'
+    is_joined: !!exp.is_joined
   }));
 };
 
@@ -202,7 +206,8 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
       stress_level: data.stress_level,
       productivity_level: data.productivity_level,
       work_phase_productivity: data.work_phase_productivity,
-      restart_count: data.restart_count
+      restart_count: data.restart_count,
+      started_at: data.start_date
     }
   };
 };
@@ -318,4 +323,40 @@ export const getExperienceTeamsService = async (experimentId) => {
 export const setUserReadyService = async (id_user, id_experiment) => {
   await setUserReady(id_user, id_experiment);
   return { message: 'Estado actualizado a LISTO' };
+};
+
+export const getExperienceQuestionsService = async (experimentId, userId) => {
+  // Verify that the user is joined to the experience
+  const isJoined = await isUserInExperience(userId, experimentId);
+  if (!isJoined) {
+    throw new Error('No estás inscrito en esta experiencia');
+  }
+
+  return await getExperienceQuestions(experimentId);
+};
+
+export const saveUserAnswersService = async (experimentId, userId, answers) => {
+  // Verify that the user is joined to the experience
+  const isJoined = await isUserInExperience(userId, experimentId);
+  if (!isJoined) {
+    throw new Error('No estás inscrito en esta experiencia');
+  }
+
+  // Validate and save answers
+  if (!Array.isArray(answers)) {
+    throw new Error('El formato de las respuestas es inválido');
+  }
+
+  for (const answer of answers) {
+    // answer should have id_question and either id_alternative or text_answer
+    await saveUserAnswer(
+      userId,
+      experimentId,
+      answer.id_question,
+      answer.id_alternative || null,
+      answer.text_answer || null
+    );
+  }
+
+  return { message: 'Respuestas guardadas exitosamente' };
 };

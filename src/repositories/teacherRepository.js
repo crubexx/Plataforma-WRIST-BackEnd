@@ -117,7 +117,7 @@ export const findExperimentByIdAndTeacher = async (
 ) => {
   const [rows] = await pool.query(
     `
-    SELECT id_experiment, status, name, access_code, duration
+    SELECT id_experiment, status, name, access_code, duration, start_date
     FROM Experiment
     WHERE id_experiment = ?
       AND created_by = ?

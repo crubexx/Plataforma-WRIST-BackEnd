@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getUserFeedback, getTeamPerformance, getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady } from '../controllers/userController.js';
+import { getUserFeedback, getTeamPerformance, getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady, getExperienceQuestions, submitExperienceAnswers } from '../controllers/userController.js';
 
 const router = Router();
 
@@ -72,6 +72,20 @@ router.post(
   '/set-ready',
   authenticateToken,
   setReady
+);
+
+// USR-009: Obtener preguntas
+router.get(
+  '/experiences/:id_experiment/questions',
+  authenticateToken,
+  getExperienceQuestions
+);
+
+// USR-010: Guardar respuestas
+router.post(
+  '/experiences/:id_experiment/answers',
+  authenticateToken,
+  submitExperienceAnswers
 );
 
 export default router;

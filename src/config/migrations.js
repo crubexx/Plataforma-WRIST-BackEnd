@@ -691,6 +691,36 @@ const migrateExperimentFeedbackTable = async () => {
 };
 
 /**
+ * Tabla UserAnswer - Respuestas de los participantes a las preguntas de la experiencia
+ */
+const migrateUserAnswerTable = async () => {
+  console.log('🔄 Verificando tabla UserAnswer...');
+  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'UserAnswer'");
+  if (tables.length === 0) {
+    console.log('➕ Creando tabla UserAnswer...');
+    await pool.query(`
+      CREATE TABLE UserAnswer (
+        id_answer INT AUTO_INCREMENT PRIMARY KEY,
+        id_user INT NOT NULL,
+        id_experiment INT NOT NULL,
+        id_question INT NOT NULL,
+        id_alternative INT NULL,
+        text_answer TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE CASCADE,
+        FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE CASCADE,
+        FOREIGN KEY (id_question) REFERENCES Question(id_question) ON DELETE CASCADE,
+        FOREIGN KEY (id_alternative) REFERENCES QuestionAlternative(id_alternative) ON DELETE SET NULL,
+        UNIQUE (id_user, id_experiment, id_question)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    console.log('✅ Tabla UserAnswer creada');
+  } else {
+    console.log('✓ Tabla UserAnswer ya existe');
+  }
+};
+
+/**
  * Ejecutar migraciones
  */
 export const runMigrations = async () => {
@@ -701,6 +731,7 @@ export const runMigrations = async () => {
     await migrateUserTable();
     await migrateUserAuthProvidersTable();
     await migrateUserSessionTable();
+    await migrateExperimentTable();
     await migrateUserExperienceResultTable();
     await migrateUserExperienceTable();
     await migrateUserPerformanceTable();
@@ -710,6 +741,7 @@ export const runMigrations = async () => {
     await migrateDeviceAssignmentTable();
     await migrateSessionMeasurementTable();
     await migrateExperimentFeedbackTable();
+    await migrateUserAnswerTable();
 
     console.log('\n✅ Todas las migraciones completadas exitosamente');
   } catch (error) {
