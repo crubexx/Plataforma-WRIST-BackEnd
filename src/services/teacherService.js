@@ -11,7 +11,8 @@ import {
   getTeamsByExperimentRepository,
   updateVisualizationModeRepository,
   createExperimentFeedbackRepository,
-  getExperimentMetricsRepository
+  getExperimentMetricsRepository,
+  getExperienceSessionRepository
 } from '../repositories/teacherRepository.js';
 import { createDeviceAssignment } from '../repositories/deviceRepository.js';
 
@@ -172,7 +173,8 @@ export const getExperienceMetricsService = async (experimentId, teacherId) => {
   }
 
   // Obtener métricas
-  const metrics = await getExperienceMetricsRepository(experimentId);
+  const summary = await getExperienceMetricsRepository(experimentId);
+  const sessions = await getExperienceSessionRepository(experimentId);
 
   return {
     experiment: {
@@ -183,7 +185,8 @@ export const getExperienceMetricsService = async (experimentId, teacherId) => {
       duration: experiment.duration,
       started_at: experiment.start_date
     },
-    metrics
+    summary,
+    sessions
   };
 };
 

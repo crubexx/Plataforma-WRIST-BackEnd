@@ -142,7 +142,7 @@ export const createGroupRepository = async ({ name, id_experiment }) => {
 };
 
 // DOE-006: Métricas de la experiencia
-export const getExperienceMetricsRepository = async (experimentId) => {
+export const getExperienceSessionRepository = async (experimentId) => {
   const [rows] = await pool.query(`
     SELECT
       sm.id_session_measurement,

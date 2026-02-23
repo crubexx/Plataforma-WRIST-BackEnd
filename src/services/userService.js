@@ -34,29 +34,29 @@ export const joinExperienceService = async (
     throw new Error('La experiencia no existe o ya no está disponible');
   }
 
-  // 1️⃣ Estado: Permitir CREATED o EN_PREPARATION
+  // Estado: Permitir CREATED o EN_PREPARATION
   const allowedStatuses = ['CREATED', 'EN_PREPARATION'];
   if (!allowedStatuses.includes(experience.status)) {
     throw new Error('La experiencia no se encuentra en una etapa de ingreso de participantes');
   }
 
-  // 2️⃣ Código - Validate against database field
+  // Código - Validate against database field
   if (experience.access_code !== access_code) {
     throw new Error('El código de acceso ingresado es incorrecto');
   }
 
-  // 3️⃣ Ya unido
+  // Ya unido
   if (await isUserAlreadyJoined(id_experiment, id_user)) {
     throw new Error('Ya te encuentras inscrito en esta experiencia');
   }
 
-  // 4️⃣ Capacidad
+  // Capacidad
   const total = await countParticipants(id_experiment);
   if (total >= experience.max_participants) {
     throw new Error('La experiencia ya alcanzó el máximo de participantes permitidos');
   }
 
-  // 5️⃣ Registrar participación
+  // Registrar participación
   await joinExperience(id_experiment, id_user);
 
   return {
@@ -67,9 +67,11 @@ export const joinExperienceService = async (
 export const getExperiencesByDateService = async (date, userId) => {
   const experiences = await getExperiencesByDateRepository(date, userId);
 
-  // Return empty array if no experiences (frontend expects array)
+  // Error
   if (!experiences || !experiences.length) {
-    return [];
+    return {
+      message: 'No se han realizado experimentos para el día seleccionado'
+    };
   }
 
   return experiences.map(exp => ({
@@ -137,19 +139,19 @@ export const getUserResultsService = async (id_user) => {
 
 export const joinTeamService = async (id_user, id_experiment, id_group) => {
 
-  // 1️⃣ Usuario debe estar inscrito en la experiencia
+  // Usuario debe estar inscrito en la experiencia
   const enrolled = await isUserInExperience(id_user, id_experiment);
   if (!enrolled) {
     throw new Error('El usuario no está inscrito en la experiencia');
   }
 
-  // 2️⃣ Experiencia debe estar en CREATED
+  // Experiencia debe estar en CREATED o EN_PREPARATION
   const exp = await getExperimentStatus(id_experiment);
-  if (!exp || exp.status !== 'CREATED') {
+  if (!exp || !['CREATED', 'EN_PREPARATION'].includes(exp.status)) {
     throw new Error('No es posible cambiar de equipo en esta etapa');
   }
 
-  // 3️⃣ Capacidad del equipo
+  // Capacidad del equipo
   const group = await getGroupInfo(id_group);
   if (!group) {
     throw new Error('Equipo no encontrado');
@@ -159,18 +161,18 @@ export const joinTeamService = async (id_user, id_experiment, id_group) => {
     throw new Error('El equipo ha alcanzado su capacidad máxima');
   }
 
-  // 4️⃣ Quitar de otros equipos (permite cambiar durante preparación)
+  // Quitar de otros equipos (permite cambiar durante preparación)
   await removeUserFromGroups(id_user, id_experiment);
 
-  // 5️⃣ Asignar al nuevo equipo
+  // Asignar al nuevo equipo
   await assignUserToGroup(id_user, id_group);
 
-  // 6️⃣ Obtener dispositivo asignado (TEMPORALMENTE DESHABILITADO)
-  // const device = await getAssignedDevice(id_user, id_experiment);
+  // Obtener dispositivo asignado
+  const device = await getAssignedDevice(id_user, id_experiment);
 
   return {
     message: 'Usuario asignado al equipo correctamente',
-    device: 'Dispositivo aún no asignado (Simulado)' // device ? device.device_code : 'Dispositivo aún no asignado'
+    device: device ? device.external_device_id : 'Dispositivo aún no asignado'
   };
 };
 
@@ -180,17 +182,15 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
 
   const data = await getUserPerformance(id_user, id_experiment);
 
-  // 1️⃣ No hay datos
-  if (!data) {
-    throw new Error('La experiencia no ha sido iniciada');
+  // No hay datos
+  if (!data || data.status === 'CREATED' || data.status === 'EN_PREPARATION') {
+    return {
+      blocked: true,
+      message: 'La experiencia aún no ha sido iniciada'
+    };
   }
 
-  // 2️⃣ Experiencia no iniciada
-  if (data.status === 'CREATED') {
-    throw new Error('La experiencia aún no ha sido iniciada');
-  }
-
-  // 3️⃣ Visualización bloqueada por docente
+  // Visualización bloqueada por docente
   if (!data.performance_visible) {
     return {
       blocked: true,
@@ -198,7 +198,7 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
     };
   }
 
-  // 4️⃣ Mostrar desempeño
+  // Mostrar desempeño
   return {
     blocked: false,
     performance: {
@@ -212,38 +212,48 @@ export const getMyPerformanceService = async (id_user, id_experiment) => {
   };
 };
 
+// Lobby & Teams
 
-export const getUserFeedbackService = async (id_user, id_experimento) => {
+export const getExperienceTeamsService = async (experimentId) => {
+  return await getTeamsByExperimentRepository(experimentId);
+};
 
-  // 1️⃣ Verificar estado del experimento
+export const setUserReadyService = async (id_user, id_experiment) => {
+  await setUserReady(id_user, id_experiment);
+  return { message: 'Estado actualizado a LISTO' };
+};
+
+export const getUserFeedbackService = async (id_user, id_experiment) => {
+
+  // Verificar estado del experimento
   const [exp] = await pool.query(
-    `SELECT estado FROM Experimento WHERE id_experimento = ?`,
-    [id_experimento]
+    `SELECT status FROM Experiment WHERE id_experiment = ?`,
+    [id_experiment]
   );
 
   if (!exp.length) {
     throw new Error('La experiencia no existe');
   }
 
-  if (exp[0].estado !== 'IN_PROGRESS') {
+  if (exp[0].status !== 'ACTIVE') {
     throw new Error('El feedback solo está disponible cuando la experiencia está en progreso');
   }
 
-  // 2️⃣ Verificar que el usuario esté en un equipo
+  // Verificar que el usuario esté en un equipo
   const [teamCheck] = await pool.query(
     `
-    SELECT 1 FROM GrupoUsuario gu
-    INNER JOIN Grupo g ON gu.id_group = g.id_group
-    WHERE gu.id_user = ? AND g.id_experimento = ?
+    SELECT 1 FROM UserGroup gu
+    INNER JOIN Group g ON gu.id_group = g.id_group
+    WHERE gu.id_user = ? AND g.id_experiment = ?
     `,
-    [id_user, id_experimento]
+    [id_user, id_experiment]
   );
 
   if (!teamCheck.length) {
     throw new Error('El usuario no pertenece a un equipo en esta experiencia');
   }
 
-  const feedback = await getUserFeedback(id_user, id_experimento);
+  const feedback = await getUserFeedback(id_user, id_experiment);
 
   return feedback;
 };
@@ -251,25 +261,28 @@ export const getUserFeedbackService = async (id_user, id_experimento) => {
 export const getTeamPerformanceService = async (
   requesterRole,
   requesterId,
-  id_experimento,
+  id_experiment,
   id_group
 ) => {
 
-  // 1️⃣ Validar experiencia
+  // Validar experiencia
   const [exp] = await pool.query(
-    `SELECT estado, performance_visible FROM Experimento WHERE id_experimento = ?`,
-    [id_experimento]
+    `SELECT status, performance_visible FROM Experiment WHERE id_experiment = ?`,
+    [id_experiment]
   );
 
   if (!exp.length) {
     throw new Error('La experiencia no existe');
   }
 
-  if (exp[0].estado === 'PREPARATION') {
-    throw new Error('La experiencia aún no ha sido iniciada');
+  if (exp[0].status === 'CREATED' || exp[0].status === 'EN_PREPARATION') {
+    return {
+      blocked: true,
+      message: 'La experiencia aún no ha sido iniciada'
+    };
   }
 
-  // 2️⃣ Si es usuario → validar que pertenezca al equipo
+  // Si es usuario → validar que pertenezca al equipo
   if (requesterRole === 'USUARIO') {
     const [check] = await pool.query(
       `
@@ -280,7 +293,7 @@ export const getTeamPerformanceService = async (
         AND ug.id_group = ?
         AND g.id_experiment = ?
       `,
-      [requesterId, id_group, id_experimento]
+      [requesterId, id_group, id_experiment]
     );
 
     if (!check.length) {
@@ -288,7 +301,7 @@ export const getTeamPerformanceService = async (
     }
   }
 
-  // 3️⃣ Si visualización bloqueada
+  // Si visualización bloqueada
   if (!exp[0].performance_visible) {
     return {
       blocked: true,
@@ -296,8 +309,8 @@ export const getTeamPerformanceService = async (
     };
   }
 
-  // 4️⃣ Obtener métricas del equipo
-  const performance = await getTeamPerformance(id_group, id_experimento);
+  // Obtener métricas del equipo
+  const performance = await getTeamPerformance(id_group, id_experiment);
 
   if (!performance || performance.total_time_seconds === null) {
     throw new Error('No hay datos disponibles para este equipo');
@@ -314,17 +327,6 @@ export const getTeamPerformanceService = async (
     }
   };
 };
-// Lobby & Teams
-
-export const getExperienceTeamsService = async (experimentId) => {
-  return await getTeamsByExperimentRepository(experimentId);
-};
-
-export const setUserReadyService = async (id_user, id_experiment) => {
-  await setUserReady(id_user, id_experiment);
-  return { message: 'Estado actualizado a LISTO' };
-};
-
 export const getExperienceQuestionsService = async (experimentId, userId) => {
   // Verify that the user is joined to the experience
   const isJoined = await isUserInExperience(userId, experimentId);

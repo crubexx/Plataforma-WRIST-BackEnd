@@ -1,6 +1,19 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/authMiddleware.js';
-import { getUserFeedback, getTeamPerformance, getMyPerformance, getExperiencesByDate, joinExperience, getMyProfile, getMyResults, joinTeam, getExperienceTeams, setReady, getExperienceQuestions, submitExperienceAnswers } from '../controllers/userController.js';
+import {
+  getUserFeedback,
+  getTeamPerformance,
+  getMyPerformance,
+  getExperiencesByDate,
+  joinExperience,
+  getMyProfile,
+  getMyResults,
+  joinTeam,
+  getExperienceTeams,
+  setReady,
+  getExperienceQuestions,
+  submitExperienceAnswers
+} from '../controllers/userController.js';
 
 const router = Router();
 
@@ -46,20 +59,6 @@ router.get(
   getMyPerformance
 );
 
-// USR-007: Feedback
-router.get(
-  '/feedback/:id_experimento',
-  authenticateToken,
-  getUserFeedback
-);
-
-// USR-008: 
-router.get(
-  '/team-performance/:id_experimento/:id_group',
-  authenticateToken,
-  getTeamPerformance
-);
-
 // USR-007: Ver equipos de una experiencia
 router.get(
   '/experiences/:id_experiment/teams',
@@ -74,14 +73,28 @@ router.post(
   setReady
 );
 
-// USR-009: Obtener preguntas
+// USR-009: Feedback
+router.get(
+  '/feedback/:id_experimento',
+  authenticateToken,
+  getUserFeedback
+);
+
+// USR-010: Desempeño del equipo
+router.get(
+  '/team-performance/:id_experimento/:id_group',
+  authenticateToken,
+  getTeamPerformance
+);
+
+// USR-011: Obtener preguntas
 router.get(
   '/experiences/:id_experiment/questions',
   authenticateToken,
   getExperienceQuestions
 );
 
-// USR-010: Guardar respuestas
+// USR-012: Guardar respuestas
 router.post(
   '/experiences/:id_experiment/answers',
   authenticateToken,

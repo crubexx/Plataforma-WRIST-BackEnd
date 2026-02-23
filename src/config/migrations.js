@@ -58,7 +58,7 @@ const migrateUserTable = async () => {
         role ENUM('SUPERADMIN','ADMIN','DOCENTE','USUARIO') NOT NULL DEFAULT 'USUARIO',
         gender ENUM('Masculino','Femenino','Otro'),
         date_of_birth DATE,
-        status ENUM('ACTIVE','INACTIVE','SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
+        status ENUM('ACTIVE','BLOCKED','SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
         registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         reset_token VARCHAR(255),
         reset_token_expires DATETIME,
@@ -238,8 +238,11 @@ const migrateExperimentTable = async () => {
         duration INT COMMENT 'Duración en minutos',
         max_participants INT DEFAULT 50,
         access_code VARCHAR(10),
+        session_id_iot VARCHAR(100),
         status ENUM('CREATED','EN_PREPARATION','ACTIVE','COMPLETED','CANCELLED') NOT NULL DEFAULT 'CREATED',
         created_by INT NOT NULL,
+        visualization_mode ENUM('INDIVIDUAL', 'TEAM', 'MIXED') DEFAULT 'INDIVIDUAL',
+        perfomance_visible BOOLEAN DEFAULT TRUE,
         start_date DATETIME COMMENT 'Fecha y hora de inicio',
         end_date DATETIME COMMENT 'Fecha y hora de finalización',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -278,6 +281,14 @@ const migrateExperimentTable = async () => {
 
     if (!existingColumns.includes('access_code')) {
       alterQueries.push(`ADD COLUMN access_code VARCHAR(10)`);
+    }
+
+    if (!existingColumns.includes('session_id_iot')) {
+      alterQueries.push(`ADD COLUMN session_id_iot VARCHAR(100)`);
+    }
+
+    if (!existingColumns.includes('visualization_mode')) {
+      alterQueries.push(`ADD COLUMN visualization_mode ENUM('INDIVIDUAL', 'TEAM', 'MIXED') DEFAULT 'INDIVIDUAL'`);
     }
 
     if (!existingColumns.includes('start_date')) {
@@ -584,28 +595,6 @@ const migrateUserGroupTable = async () => {
 };
 
 /**
- * Tabla Device - Dispositivos físicos
- */
-const migrateDeviceTable = async () => {
-  console.log('🔄 Verificando tabla Device...');
-  const [tables] = await pool.query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'DBProductAPP' AND TABLE_NAME = 'Device'");
-  if (tables.length === 0) {
-    console.log('➕ Creando tabla Device...');
-    await pool.query(`
-      CREATE TABLE Device (
-        id_device INT AUTO_INCREMENT PRIMARY KEY,
-        device_code VARCHAR(100) NOT NULL UNIQUE,
-        device_type ENUM('PULSERA','TOTEM') NOT NULL,
-        status ENUM('AVAILABLE','ASSIGNED','OFFLINE') DEFAULT 'AVAILABLE'
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `);
-    console.log('✅ Tabla Device creada');
-  } else {
-    console.log('✓ Tabla Device ya existe');
-  }
-};
-
-/**
  * Tabla DeviceAssignment - Asignaciones de dispositivos
  */
 const migrateDeviceAssignmentTable = async () => {
@@ -619,14 +608,12 @@ const migrateDeviceAssignmentTable = async () => {
         id_user INT,
         id_experiment INT,
         id_group INT,
-        id_device INT,
-        external_device_id VARCHAR(100),
-        device_type VARCHAR(50),
+        external_device_id VARCHAR(100) NOT NULL,
+        device_type ENUM('PULSERA','TOTEM') NOT NULL,
         assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (id_user) REFERENCES User(id_user) ON DELETE SET NULL,
         FOREIGN KEY (id_experiment) REFERENCES Experiment(id_experiment) ON DELETE SET NULL,
-        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE SET NULL,
-        FOREIGN KEY (id_device) REFERENCES Device(id_device) ON DELETE SET NULL
+        FOREIGN KEY (id_group) REFERENCES \`Group\`(id_group) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
     console.log('✅ Tabla DeviceAssignment creada');
@@ -737,7 +724,6 @@ export const runMigrations = async () => {
     await migrateUserPerformanceTable();
     await migrateGroupTable();
     await migrateUserGroupTable();
-    await migrateDeviceTable();
     await migrateDeviceAssignmentTable();
     await migrateSessionMeasurementTable();
     await migrateExperimentFeedbackTable();
