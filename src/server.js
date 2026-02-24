@@ -2,6 +2,7 @@ import 'dotenv/config';
 import http from 'http';
 import { Server } from 'socket.io';
 import app from './app.js';
+import { initSocket } from './socket.js';
 
 const PORT = 3000;
 const server = http.createServer(app);
@@ -14,6 +15,9 @@ const io = new Server(server, {
   }
 });
 
+// Registrar instancia global para que controllers puedan emitir eventos
+initSocket(io);
+
 // Registrar eventos de Socket.io
 io.on('connection', (socket) => {
   console.log('🔌 Usuario conectado vía WebSocket:', socket.id);
@@ -24,7 +28,7 @@ io.on('connection', (socket) => {
     socket.join(room);
     console.log(`📍 Socket ${socket.id} unido a la sala: ${room}`);
 
-    // Notificar al docente que hay un nuevo participante (opcional por ahora)
+    // Notificar al docente que hay un nuevo participante
     socket.to(room).emit('participant_joined', { socketId: socket.id });
   });
 
@@ -45,8 +49,37 @@ io.on('connection', (socket) => {
     socket.to(room).emit('lobby_refresh');
   });
 
+  // Evento: Docente envía feedback en tiempo real
+  socket.on('send_feedback', ({ id_experiment, message, target }) => {
+    const room = `experiment_${id_experiment}`;
+    console.log(`💬 Feedback enviado en sala ${room}:`, message);
+    // Emitir a todos (o al target específico si se define en el futuro)
+    io.to(room).emit('feedback_received', {
+      message,
+      target,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Evento: Finalizar experiencia (notificar a participantes)
+  socket.on('finish_experience', (id_experiment) => {
+    const room = `experiment_${id_experiment}`;
+    console.log(`🏁 Experiencia ${id_experiment} finalizada, notificando a sala ${room}`);
+    io.to(room).emit('experience_finished', { id_experiment });
+  });
+
+  // Evento: Cancelar experiencia (notificar a participantes)
+  socket.on('cancel_experience', (id_experiment) => {
+    const room = `experiment_${id_experiment}`;
+    console.log(`🚫 Experiencia ${id_experiment} cancelada, notificando a sala ${room}`);
+    io.to(room).emit('experience_cancelled', {
+      id_experiment,
+      reason: 'El docente canceló el experimento'
+    });
+  });
+
   socket.on('disconnect', () => {
-    console.log('❌ Usuario desconectado de WebSocket');
+    console.log('❌ Usuario desconectado de WebSocket:', socket.id);
   });
 });
 

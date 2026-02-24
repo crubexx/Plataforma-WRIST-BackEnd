@@ -12,7 +12,8 @@ import {
   getExperienceTeams,
   setReady,
   getExperienceQuestions,
-  submitExperienceAnswers
+  submitExperienceAnswers,
+  getExperienceById
 } from '../controllers/userController.js';
 
 const router = Router();
@@ -99,6 +100,13 @@ router.post(
   '/experiences/:id_experiment/answers',
   authenticateToken,
   submitExperienceAnswers
+);
+
+// USR-013: Obtener experiencia por ID (para lobby del participante)
+router.get(
+  '/experiences/:id_experiment',
+  authenticateToken,
+  getExperienceById
 );
 
 export default router;

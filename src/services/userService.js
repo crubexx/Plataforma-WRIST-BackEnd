@@ -362,3 +362,28 @@ export const saveUserAnswersService = async (experimentId, userId, answers) => {
 
   return { message: 'Respuestas guardadas exitosamente' };
 };
+
+// USR-013: Obtener experimento por ID (para lobby del participante)
+export const getExperienceByIdService = async (experimentId, userId) => {
+  // Verificar que el usuario esté inscrito en la experiencia
+  const enrolled = await isUserInExperience(userId, experimentId);
+  if (!enrolled) {
+    throw new Error('No estás inscrito en esta experiencia');
+  }
+
+  const experience = await findExperienceById(experimentId);
+  if (!experience) {
+    throw new Error('La experiencia no existe');
+  }
+
+  return {
+    id_experiment: experience.id_experiment,
+    name: experience.name,
+    description: experience.description,
+    status: experience.status,
+    start_date: experience.start_date,
+    duration: experience.duration,
+    access_code: experience.access_code,
+    max_participants: experience.max_participants
+  };
+};

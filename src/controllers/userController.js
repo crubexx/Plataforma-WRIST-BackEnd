@@ -10,7 +10,8 @@ import {
   getExperienceTeamsService,
   setUserReadyService,
   getExperienceQuestionsService,
-  saveUserAnswersService
+  saveUserAnswersService,
+  getExperienceByIdService
 } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
@@ -244,6 +245,21 @@ export const submitExperienceAnswers = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+// USR-013: Obtener experimento por ID (para lobby del participante)
+export const getExperienceById = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+    const { id_experiment } = req.params;
+
+    const result = await getExperienceByIdService(parseInt(id_experiment), id_user);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(404).json({
       message: error.message
     });
   }

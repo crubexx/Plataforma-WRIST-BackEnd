@@ -15,6 +15,7 @@ import {
   getExperienceByIdService
 } from '../services/teacherService.js';
 import { getTeamsByExperimentRepository } from '../repositories/teacherRepository.js';
+import { getIO } from '../socket.js';
 
 // DOE-001: Crear experiencia
 export const createExperience = async (req, res) => {
@@ -191,6 +192,20 @@ export const createManualFeedback = async (req, res) => {
       { id_user, id_group }
     );
 
+    // Emitir en tiempo real a todos los participantes de la sala
+    try {
+      const io = getIO();
+      const room = `experiment_${id}`;
+      io.to(room).emit('feedback_received', {
+        message,
+        target: id_group ? { id_group } : id_user ? { id_user } : 'all',
+        timestamp: new Date().toISOString()
+      });
+      console.log(`💬 Feedback emitido por socket a sala ${room}`);
+    } catch (socketError) {
+      console.warn('⚠️ Socket no disponible para emitir feedback:', socketError.message);
+    }
+
     return res.status(201).json(result);
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -219,6 +234,15 @@ export const finishExperience = async (req, res) => {
     const teacherId = req.user.id_user;
 
     const result = await finishExperienceService(experimentId, teacherId);
+
+    // Notificar a los participantes que la experiencia terminó
+    try {
+      const io = getIO();
+      io.to(`experiment_${experimentId}`).emit('experience_finished', { id_experiment: experimentId });
+    } catch (socketError) {
+      console.warn('⚠️ Socket no disponible al finalizar experiencia:', socketError.message);
+    }
+
     return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({
@@ -249,6 +273,19 @@ export const cancelExperience = async (req, res) => {
     const teacherId = req.user.id_user;
 
     const result = await cancelExperienceService(experimentId, teacherId);
+
+    // Notificar a los participantes que el experimento fue cancelado
+    try {
+      const io = getIO();
+      io.to(`experiment_${experimentId}`).emit('experience_cancelled', {
+        id_experiment: experimentId,
+        reason: 'El docente canceló el experimento'
+      });
+      console.log(`🚫 experience_cancelled emitido a sala experiment_${experimentId}`);
+    } catch (socketError) {
+      console.warn('⚠️ Socket no disponible al cancelar experiencia:', socketError.message);
+    }
+
     return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({
