@@ -68,6 +68,14 @@ io.on('connection', (socket) => {
     io.to(room).emit('experience_finished', { id_experiment });
   });
 
+  // Evento: Docente cambia el modo de visualización para los participantes
+  socket.on('set_visualization_mode', ({ id_experiment, mode }) => {
+    const room = `experiment_${id_experiment}`;
+    console.log(`👁️ Modo de visualización cambiado a ${mode} en sala ${room}`);
+    // Emitir solo a los otros clientes (no al docente que lo envió)
+    socket.to(room).emit('visualization_mode_changed', { mode });
+  });
+
   // Evento: Cancelar experiencia (notificar a participantes)
   socket.on('cancel_experience', (id_experiment) => {
     const room = `experiment_${id_experiment}`;
