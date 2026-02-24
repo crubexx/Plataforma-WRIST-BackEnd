@@ -16,12 +16,17 @@ import {
   setUserReady,
   getTeamsByExperimentRepository,
   getExperienceQuestions,
-  saveUserAnswer
+  saveUserAnswer,
+  getDevicesByExperiment
 } from '../repositories/userRepository.js'; import { pool } from '../config/database.js';
 
 import { getUserFeedback } from '../repositories/feedbackRepository.js';
 import { getTeamPerformance } from '../repositories/teamPerformanceRepository.js';
 import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
+import {
+  getHeartRateByMacAndRange,
+  getActivityLogsByUidAndRange
+} from '../repositories/iotRepository.js';
 
 export const joinExperienceService = async (
   id_experiment,
@@ -361,4 +366,41 @@ export const saveUserAnswersService = async (experimentId, userId, answers) => {
   }
 
   return { message: 'Respuestas guardadas exitosamente' };
+};
+
+export const getExperimentHistoryService = async (id_experiment) => {
+
+  const experiment = await findExperienceById(id_experiment);
+
+  if (!experiment) {
+    throw new Error('La experiencia no existe');
+  }
+
+  if (!experiment.start_date || !experiment.end_date) {
+    throw new Error('La experiencia no tiene rango de tiempo definido');
+  }
+
+  const devices = await getDevicesByExperiment(id_experiment);
+
+  if (!devices.length) {
+    throw new Error('No hay dispositivos asignados a esta experiencia');
+  }
+
+  const result = [];
+
+  for (const device of devices) {
+
+    const heartRate = await getHeartRateByMacAndRange(
+      device.external_device_id,
+      experiment.start_date,
+      experiment.end_date
+    );
+
+    result.push({
+      device: device.external_device_id,
+      heart_rate: heartRate
+    });
+  }
+
+  return result;
 };

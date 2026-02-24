@@ -248,3 +248,18 @@ export const submitExperienceAnswers = async (req, res) => {
     });
   }
 };
+
+export const getExperimentHistory = async (req, res) => {
+  try {
+    const { id_experiment } = req.params;
+
+    const data = await getExperimentHistoryService(id_experiment);
+
+    return res.status(200).json(data);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
