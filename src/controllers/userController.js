@@ -10,7 +10,8 @@ import {
   getExperienceTeamsService,
   setUserReadyService,
   getExperienceQuestionsService,
-  saveUserAnswersService
+  saveUserAnswersService,
+  getExperimentHistoryService
 } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
@@ -263,3 +264,4 @@ export const getExperimentHistory = async (req, res) => {
     });
   }
 };
+

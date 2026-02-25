@@ -370,17 +370,35 @@ export const saveUserAnswersService = async (experimentId, userId, answers) => {
 
 export const getExperimentHistoryService = async (id_experiment) => {
 
-  const experiment = await findExperienceById(id_experiment);
+  // 1. Obtener rango de fechas
+  const [experimentRows] = await pool.query(
+    `
+    SELECT start_date, end_date
+    FROM Experiment
+    WHERE id_experiment = ?
+    `,
+    [id_experiment]
+  );
 
-  if (!experiment) {
+  if (!experimentRows.length) {
     throw new Error('La experiencia no existe');
   }
 
-  if (!experiment.start_date || !experiment.end_date) {
-    throw new Error('La experiencia no tiene rango de tiempo definido');
+  const { start_date, end_date } = experimentRows[0];
+
+  if (!start_date || !end_date) {
+    throw new Error('La experiencia no tiene rango de fechas definido');
   }
 
-  const devices = await getDevicesByExperiment(id_experiment);
+  // 2. Obtener dispositivos asignados
+  const [devices] = await pool.query(
+    `
+    SELECT external_device_id
+    FROM DeviceAssignment
+    WHERE id_experiment = ?
+    `,
+    [id_experiment]
+  );
 
   if (!devices.length) {
     throw new Error('No hay dispositivos asignados a esta experiencia');
@@ -388,12 +406,12 @@ export const getExperimentHistoryService = async (id_experiment) => {
 
   const result = [];
 
+  // 3. Consultar IoT por cada dispositivo
   for (const device of devices) {
-
     const heartRate = await getHeartRateByMacAndRange(
       device.external_device_id,
-      experiment.start_date,
-      experiment.end_date
+      start_date,
+      end_date
     );
 
     result.push({
