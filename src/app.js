@@ -10,12 +10,16 @@ const app = express();
 
 
 // CORS configuration
-app.use(cors({
-  origin: 'http://localhost:4200',  // Frontend URL
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+//app.use(cors({
+//  origin: 'http://localhost:4200',  // Frontend URL
+//  credentials: true,
+//  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//  allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+
+// CORS Temporal
+app.use(cors());
+
 
 app.use(express.json());
 
