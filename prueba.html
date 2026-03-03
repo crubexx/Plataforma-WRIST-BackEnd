@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<canvas id="myChart"></canvas>
+
+<script>
+async function loadData() {
+  const response = await fetch('http://localhost:3000/api/user/experiments/2/history', {
+    headers: {
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoxLCJlbWFpbCI6ImFkbWluQGRlbW8uY2wiLCJyb2xlIjoiU1VQRVJBRE1JTiIsImlhdCI6MTc3MTk4NjQwOSwiZXhwIjoxNzcyMDcyODA5fQ.YP2m3lm1Qy9Et4S2y-e2LLMXduUcls4Gjq3tNeGbsCU'
+    }
+  });
+
+  const data = await response.json();
+
+  const heartRateData = data[0].heart_rate;
+
+  const labels = heartRateData.map(p => new Date(p.ts).toLocaleTimeString());
+  const values = heartRateData.map(p => p.hr);
+
+  const ctx = document.getElementById('myChart');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Frecuencia Cardíaca (BPM)',
+        data: values,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          display: true
+        },
+        y: {
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>

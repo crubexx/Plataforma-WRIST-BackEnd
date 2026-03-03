@@ -16,12 +16,17 @@ import {
   setUserReady,
   getTeamsByExperimentRepository,
   getExperienceQuestions,
-  saveUserAnswer
+  saveUserAnswer,
+  getDevicesByExperiment
 } from '../repositories/userRepository.js'; import { pool } from '../config/database.js';
 
 import { getUserFeedback } from '../repositories/feedbackRepository.js';
 import { getTeamPerformance } from '../repositories/teamPerformanceRepository.js';
 import { getUserPerformance } from '../repositories/userPerformanceRepository.js';
+import {
+  getHeartRateByMacAndRange,
+  getActivityLogsByUidAndRange
+} from '../repositories/iotRepository.js';
 
 export const joinExperienceService = async (
   id_experiment,
@@ -386,4 +391,59 @@ export const getExperienceByIdService = async (experimentId, userId) => {
     access_code: experience.access_code,
     max_participants: experience.max_participants
   };
+};
+
+export const getExperimentHistoryService = async (id_experiment) => {
+
+  // 1. Obtener rango de fechas
+  const [experimentRows] = await pool.query(
+    `
+    SELECT start_date, end_date
+    FROM Experiment
+    WHERE id_experiment = ?
+    `,
+    [id_experiment]
+  );
+
+  if (!experimentRows.length) {
+    throw new Error('La experiencia no existe');
+  }
+
+  const { start_date, end_date } = experimentRows[0];
+
+  if (!start_date || !end_date) {
+    throw new Error('La experiencia no tiene rango de fechas definido');
+  }
+
+  // 2. Obtener dispositivos asignados
+  const [devices] = await pool.query(
+    `
+    SELECT external_device_id
+    FROM DeviceAssignment
+    WHERE id_experiment = ?
+    `,
+    [id_experiment]
+  );
+
+  if (!devices.length) {
+    throw new Error('No hay dispositivos asignados a esta experiencia');
+  }
+
+  const result = [];
+
+  // 3. Consultar IoT por cada dispositivo
+  for (const device of devices) {
+    const heartRate = await getHeartRateByMacAndRange(
+      device.external_device_id,
+      start_date,
+      end_date
+    );
+
+    result.push({
+      device: device.external_device_id,
+      heart_rate: heartRate
+    });
+  }
+
+  return result;
 };

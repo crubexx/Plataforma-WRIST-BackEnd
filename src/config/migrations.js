@@ -727,6 +727,8 @@ export const runMigrations = async () => {
     await migrateDeviceAssignmentTable();
     await migrateSessionMeasurementTable();
     await migrateExperimentFeedbackTable();
+    await migrateQuestionTable();
+    await migrateQuestionAlternativeTable();
     await migrateUserAnswerTable();
 
     console.log('\n✅ Todas las migraciones completadas exitosamente');

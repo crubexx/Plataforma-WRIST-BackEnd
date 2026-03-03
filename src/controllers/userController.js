@@ -11,7 +11,8 @@ import {
   setUserReadyService,
   getExperienceQuestionsService,
   saveUserAnswersService,
-  getExperienceByIdService
+  getExperienceByIdService,
+  getExperimentHistoryService
 } from '../services/userService.js';
 
 export const getExperiencesByDate = async (req, res) => {
@@ -260,6 +261,21 @@ export const getExperienceById = async (req, res) => {
     return res.status(200).json(result);
   } catch (error) {
     return res.status(404).json({
+      message: error.message
+    });
+  }
+};
+
+export const getExperimentHistory = async (req, res) => {
+  try {
+    const { id_experiment } = req.params;
+
+    const data = await getExperimentHistoryService(id_experiment);
+
+    return res.status(200).json(data);
+
+  } catch (error) {
+    return res.status(400).json({
       message: error.message
     });
   }

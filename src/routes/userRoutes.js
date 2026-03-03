@@ -13,7 +13,8 @@ import {
   setReady,
   getExperienceQuestions,
   submitExperienceAnswers,
-  getExperienceById
+  getExperienceById,
+  getExperimentHistory
 } from '../controllers/userController.js';
 
 const router = Router();
@@ -107,6 +108,12 @@ router.get(
   '/experiences/:id_experiment',
   authenticateToken,
   getExperienceById
+);
+
+router.get(
+  '/experiments/:id_experiment/history',
+  authenticateToken,
+  getExperimentHistory
 );
 
 export default router;
