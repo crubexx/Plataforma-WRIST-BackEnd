@@ -12,7 +12,8 @@ import {
   updateVisualizationModeService,
   generateExperimentFeedbackService,
   createManualFeedbackService,
-  getExperienceByIdService
+  getExperienceByIdService,
+  checkExperienceStatusService
 } from '../services/teacherService.js';
 import { getTeamsByExperimentRepository } from '../repositories/teacherRepository.js';
 import { getIO } from '../socket.js';
@@ -55,6 +56,21 @@ export const getExperienceById = async (req, res) => {
   } catch (error) {
     return res.status(404).json({
       message: error.message
+    });
+  }
+};
+
+export const checkExperienceStatus = async (req, res) => {
+  try {
+    const experimentId = parseInt(req.params.id);
+    const teacherId = req.user.id_user;
+
+    const statusCheck = await checkExperienceStatusService(experimentId, teacherId);
+    return res.status(200).json(statusCheck);
+  } catch (error) {
+    console.error('Error checkExperienceStatus:', error);
+    return res.status(500).json({
+      message: 'Error al comprobar estado de la experiencia'
     });
   }
 };

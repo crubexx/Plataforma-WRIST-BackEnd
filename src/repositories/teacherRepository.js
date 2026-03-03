@@ -117,7 +117,8 @@ export const findExperimentByIdAndTeacher = async (
 ) => {
   const [rows] = await pool.query(
     `
-    SELECT id_experiment, status, name, access_code, duration, start_date
+    SELECT id_experiment, status, name, access_code, duration, start_date,
+           TIMESTAMPDIFF(SECOND, start_date, NOW()) AS elapsed_seconds
     FROM Experiment
     WHERE id_experiment = ?
       AND created_by = ?

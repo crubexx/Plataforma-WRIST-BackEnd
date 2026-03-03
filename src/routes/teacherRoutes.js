@@ -3,6 +3,7 @@ import {
   createExperience,
   getTeacherExperiences,
   getExperienceById,
+  checkExperienceStatus,
   getConnectedUsers,
   createGroup,
   assignDevice,
@@ -44,6 +45,14 @@ router.get(
   authenticateToken,
   authorizeTeacher,
   getExperienceById
+);
+
+// DOE-002.1: Ver estado en vivo para la validación del Sidebar
+router.get(
+  '/experiences/:id/status',
+  authenticateToken,
+  authorizeTeacher,
+  checkExperienceStatus
 );
 
 // DOE-003: Ver usuarios conectados

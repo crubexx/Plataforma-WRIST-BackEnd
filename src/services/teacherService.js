@@ -82,6 +82,21 @@ export const getTeacherExperiencesService = async (teacherId) => {
   return await getTeacherExperiencesRepository(teacherId);
 };
 
+export const checkExperienceStatusService = async (experimentId, teacherId) => {
+  const experiment = await findExperimentByIdAndTeacher(experimentId, teacherId);
+  if (!experiment) {
+    return { status: null, canResume: false, message: 'Experiencia no encontrada o sin permisos' };
+  }
+
+  const canResume = experiment.status === 'CREATED' || experiment.status === 'ACTIVE';
+
+  return {
+    status: experiment.status,
+    canResume,
+    message: canResume ? 'Experiencia disponible' : 'La experiencia ya está finalizada o cancelada'
+  };
+};
+
 // DOE-003: Ver usuarios conectados
 export const getConnectedUsersService = async () => {
   return await getConnectedUsersRepository();
@@ -183,7 +198,8 @@ export const getExperienceMetricsService = async (experimentId, teacherId) => {
       status: experiment.status,
       access_code: experiment.access_code,
       duration: experiment.duration,
-      started_at: experiment.start_date
+      started_at: experiment.start_date,
+      elapsed_seconds: Number(experiment.elapsed_seconds) || 0
     },
     summary,
     sessions
