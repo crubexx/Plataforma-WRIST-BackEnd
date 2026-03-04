@@ -1,10 +1,14 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { sendResetPasswordEmail } from '../utils/mailService.js';
-import { updateGoogleUserData, findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
+import { sendResetPasswordEmail, sendGoogleWelcomeEmail } from '../utils/mailService.js';
+import { updateGoogleUserData, findUserByEmail, findUserById, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
 import { isValidRut } from '../utils/rutValidator.js';
 //import { registerUserSession, deactivateUserSession } from '../repositories/sessionRepository.js';
+
+const generateRandomPassword = () => {
+  return crypto.randomBytes(6).toString('base64').slice(0, 10);
+};
 
 // ACC-001: Inicio de Sesión 
 export const loginUser = async (email, password) => {
@@ -187,7 +191,7 @@ export const recoverPassword = async (email) => {
 
   await saveResetToken(email, token, expires);
 
-  const link = `${process.env.FRONTEND_URL}/acceso/restablecer-contrasena?token=${token}`;
+  const link = `${process.env.FRONTEND_URL}/access/reset-password/${token}`;
 
   await sendResetPasswordEmail(
     email,
@@ -270,15 +274,34 @@ export const completeGoogleRegistration = async (
     throw new Error('Debe tener al menos 16 años para registrarse');
   }
 
-  await updateGoogleUserData(
-    id_user,
-    rut,
-    gender,
-    date_of_birth
-  );
+  // Generar contraseña automática
+const plainPassword = generateRandomPassword();
 
-  return {
-    message: 'Registro completado correctamente',
-    age
-  };
+// Hash contraseña
+const password_hash = await bcrypt.hash(plainPassword, 10);
+
+// Guardar datos + contraseña
+await updateGoogleUserData(
+  id_user,
+  rut,
+  gender,
+  date_of_birth,
+  password_hash
+);
+
+// Obtener usuario
+const user = await findUserById(id_user);
+
+// Enviar correo
+await sendGoogleWelcomeEmail(
+  user.email,
+  user.first_name,
+  plainPassword
+);
+
+return {
+  message: 'Registro completado correctamente. Se ha enviado una contraseña a tu correo.',
+  age
+};
+
 };

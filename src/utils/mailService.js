@@ -467,3 +467,172 @@ export const sendResetPasswordEmail = async (to, resetUrl, nombre) => {
     html
   });
 };
+
+export const sendGoogleWelcomeEmail = async (to, nombre, password) => {
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuenta creada con Google - WRIST</title>
+</head>
+
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#F2F2F2;">
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#F2F2F2;">
+<tr>
+<td style="padding:40px 20px;">
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);overflow:hidden;">
+
+<tr>
+<td style="background:linear-gradient(135deg,#023859 0%,#265D73 100%);padding:40px 30px;text-align:center;">
+<h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:700;">WRIST</h1>
+<p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">
+Work Research in Integrated Socio-technical Tracking
+</p>
+</td>
+</tr>
+
+<tr>
+<td style="padding:40px 30px;">
+
+<table width="100%">
+<tr>
+<td style="text-align:center;padding-bottom:30px;">
+<div style="width:80px;height:80px;background:#E8F4F8;border-radius:50%;margin:auto;display:flex;align-items:center;justify-content:center;">
+<span style="font-size:40px;">🔑</span>
+</div>
+</td>
+</tr>
+</table>
+
+<h2 style="margin:0 0 20px;color:#023859;font-size:24px;font-weight:700;text-align:center;">
+Cuenta creada con Google
+</h2>
+
+<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+Hola <strong>${nombre}</strong>,
+</p>
+
+<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+Tu cuenta en <strong>WRIST</strong> fue creada usando tu cuenta de Google.
+Para que también puedas iniciar sesión con correo y contraseña,
+hemos generado una contraseña para ti.
+</p>
+
+<table width="100%" style="background:#f9fafb;border-radius:8px;padding:20px;margin-bottom:30px;">
+<tr>
+<td>
+
+<p style="margin:0 0 10px;color:#023859;font-size:14px;font-weight:600;">
+🔑 Credenciales de acceso
+</p>
+
+<p style="margin:8px 0;">
+<strong>Correo:</strong> ${to}
+</p>
+
+<p style="margin:8px 0;">
+<strong>Contraseña:</strong>
+<code style="background:#ffffff;padding:4px 8px;border-radius:4px;color:#F28F16;">
+${password}
+</code>
+</p>
+
+</td>
+</tr>
+</table>
+
+<table width="100%">
+<tr>
+<td style="text-align:center;padding-bottom:30px;">
+<a href="${process.env.FRONTEND_URL}/access/login"
+style="display:inline-block;padding:16px 40px;background:#F28F16;color:#ffffff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;box-shadow:0 4px 12px rgba(242,143,22,0.3);">
+Iniciar Sesión
+</a>
+</td>
+</tr>
+</table>
+
+<table width="100%" style="background:#E8F4F8;border-left:4px solid #265D73;border-radius:4px;padding:20px;margin-bottom:30px;">
+<tr>
+<td>
+
+<p style="margin:0 0 10px;color:#023859;font-size:14px;font-weight:600;">
+ℹ️ Recomendación de seguridad
+</p>
+
+<ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:1.8;">
+<li>Te recomendamos cambiar esta contraseña después de iniciar sesión</li>
+<li>Utiliza contraseñas seguras con mayúsculas, números y símbolos</li>
+<li>No compartas tus credenciales con nadie</li>
+</ul>
+
+</td>
+</tr>
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td style="padding:0 30px;">
+<div style="border-top:1px solid #e5e7eb;"></div>
+</td>
+</tr>
+
+<tr>
+<td style="padding:30px;text-align:center;background:#f9fafb;">
+
+<p style="margin:0 0 15px;color:#6b7280;font-size:14px;">
+¿Necesitas ayuda?
+<a href="mailto:soporte@wrist.cl" style="color:#F28F16;text-decoration:none;font-weight:600;">
+Contáctanos
+</a>
+</p>
+
+<p style="margin:0 0 10px;color:#9ca3af;font-size:12px;">
+© 2026 WRIST - Universidad Católica del Norte
+</p>
+
+<p style="margin:0;color:#9ca3af;font-size:12px;">
+Laboratorio de Producción UCN, Antofagasta, Chile
+</p>
+
+<p style="margin:15px 0 0;color:#9ca3af;font-size:11px;">
+Este es un correo automático. Por favor no respondas a este mensaje.
+</p>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject: 'Cuenta creada con Google - WRIST',
+    html
+  });
+};

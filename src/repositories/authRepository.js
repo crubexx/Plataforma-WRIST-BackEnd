@@ -146,14 +146,15 @@ export const updateGoogleUserData = async (
   id_user,
   rut,
   gender,
-  date_of_birth
+  date_of_birth,
+  password_hash
 ) => {
   await pool.query(
     `
     UPDATE User
-    SET rut = ?, gender = ?, date_of_birth = ?
+    SET rut = ?, gender = ?, date_of_birth = ?, password_hash = ?
     WHERE id_user = ?
     `,
-    [rut, gender, date_of_birth, id_user]
+    [rut, gender, date_of_birth, password_hash, id_user]
   );
 };
