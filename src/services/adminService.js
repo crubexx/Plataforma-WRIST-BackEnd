@@ -197,7 +197,7 @@ export const editUserService = async (userId, data, admin) => {
     throw new Error('Rol no válido');
   }
 
-  const validStatus = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
+  const validStatus = ['ACTIVE', 'BLOCKED', 'SUSPENDED'];
   if (status && !validStatus.includes(status)) {
     throw new Error('Estado no válido');
   }

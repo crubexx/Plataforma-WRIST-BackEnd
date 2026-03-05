@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import app from './app.js';
 import { initSocket } from './socket.js';
+import { seedAdmins } from './config/admins.js';
 
 const PORT = 3000;
 const server = http.createServer(app);
@@ -90,6 +91,8 @@ io.on('connection', (socket) => {
     console.log('❌ Usuario desconectado de WebSocket:', socket.id);
   });
 });
+
+await seedAdmins();
 
 server.listen(PORT, () => {
   console.log(`WRIST Backend Server (con WebSockets) corriendo en puerto ${PORT}`);
