@@ -12,8 +12,8 @@ export const getUserPerformance = async (id_user, id_experiment) => {
       e.status,
       e.performance_visible,
       e.start_date
-    FROM UserPerformance up
-    INNER JOIN Experiment e ON up.id_experiment = e.id_experiment
+    FROM userperformance up
+    INNER JOIN experiment e ON up.id_experiment = e.id_experiment
     WHERE up.id_user = ? AND up.id_experiment = ?
     `,
     [id_user, id_experiment]

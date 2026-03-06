@@ -80,18 +80,16 @@ export const findUserProfileById = async (id_user) => {
 export const getUserExperienceResultsRepository = async (id_user) => {
   const [rows] = await pool.query(
     `
-    SELECT
+    SELECT DISTINCT
       e.id_experiment,
       e.name AS experience_name,
       e.status,
-      r.productivity_score,
-      r.stress_level,
-      r.feedback,
-      r.created_at
-    FROM UserExperienceResult r
-    INNER JOIN Experiment e ON r.id_experiment = e.id_experiment
-    WHERE r.id_user = ?
-    ORDER BY r.created_at DESC
+      e.end_date
+    FROM usergroup ug
+    JOIN \`group\` g ON ug.id_group = g.id_group
+    JOIN experiment e ON g.id_experiment = e.id_experiment
+    WHERE ug.id_user = ?
+    ORDER BY e.end_date DESC
     `,
     [id_user]
   );

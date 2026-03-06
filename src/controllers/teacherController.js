@@ -81,9 +81,9 @@ export const getConnectedUsers = async (req, res) => {
     const users = await getConnectedUsersService();
 
     if (users.length === 0) {
-      return res.status(200).json({
+      return res.status(200).json([{
         message: 'No hay usuarios conectados actualmente'
-      });
+      }]);
     }
 
     return res.status(200).json(users);

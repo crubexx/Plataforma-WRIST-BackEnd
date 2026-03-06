@@ -11,9 +11,9 @@ export const getTeamPerformance = async (id_group, id_experiment) => {
       SUM(up.restart_count) AS total_restarts,
       e.status,
       e.performance_visible
-    FROM UserPerformance up
-    INNER JOIN UserGroup ug ON up.id_user = ug.id_user
-    INNER JOIN Experiment e ON up.id_experiment = e.id_experiment
+    FROM userperformance up
+    INNER JOIN usergroup ug ON up.id_user = ug.id_user
+    INNER JOIN experiment e ON up.id_experiment = e.id_experiment
     WHERE ug.id_group = ?
       AND up.id_experiment = ?
     GROUP BY e.status, e.performance_visible

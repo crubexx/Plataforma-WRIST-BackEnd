@@ -57,7 +57,7 @@ router.get(
 
 // DOE-003: Ver usuarios conectados
 router.get(
-  '/connected-users',
+  '/connected-users/',
   authenticateToken,
   authorizeTeacher,
   getConnectedUsers

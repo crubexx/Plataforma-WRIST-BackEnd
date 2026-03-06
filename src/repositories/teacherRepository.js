@@ -95,16 +95,19 @@ export const getTeacherExperiencesRepository = async (teacherId) => {
 };
 
 // DOE-003: Usuarios conectados actualmente
-export const getConnectedUsersRepository = async () => {
+export const getConnectedUsersRepository = async (experimentId) => {
   const [rows] = await pool.query(`
     SELECT DISTINCT
+      u.id_user,
       u.first_name,
       u.last_name
-    FROM UserSession s
-    INNER JOIN User u ON u.id_user = s.id_user
-    WHERE s.is_active = TRUE
-      AND u.role = 'USUARIO'
-  `);
+    FROM usergroup s
+    JOIN \`group\` g ON s.id_group = g.id_group
+    JOIN user u ON u.id_user = s.id_user
+    WHERE u.role = 'USUARIO' 
+    AND s.active = TRUE
+  `,
+  [experimentId]);
 
   return rows;
 };
@@ -303,6 +306,16 @@ export const finishExperienceRepository = async (experimentId) => {
     [experimentId]
   );
 
+  await pool.query(
+    `
+    UPDATE usergroup ug
+    JOIN \`group\` g ON ug.id_group = g.id_group
+    SET ug.active = FALSE
+    WHERE g.id_experiment = ?
+  `,
+    [experimentId]
+  );
+
   return result.affectedRows > 0;
 };
 
@@ -315,6 +328,16 @@ export const cancelExperienceRepository = async (experimentId) => {
         end_date = NOW()
     WHERE id_experiment = ?
     `,
+    [experimentId]
+  );
+
+  await pool.query(
+    `
+    UPDATE usergroup ug
+    JOIN \`group\` g ON ug.id_group = g.id_group
+    SET ug.active = FALSE
+    WHERE g.id_experiment = ?
+  `,
     [experimentId]
   );
 
