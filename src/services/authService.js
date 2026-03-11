@@ -1,9 +1,14 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { sendResetPasswordEmail } from '../utils/mailService.js';
-import { findUserByEmail, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
+import { sendResetPasswordEmail, sendGoogleWelcomeEmail } from '../utils/mailService.js';
+import { updateGoogleUserData, findUserByEmail, findUserById, findUserByRut, createUser, saveResetToken, findUserByResetToken, updatePassword } from '../repositories/authRepository.js';
 import { isValidRut } from '../utils/rutValidator.js';
+//import { registerUserSession, deactivateUserSession } from '../repositories/sessionRepository.js';
+
+const generateRandomPassword = () => {
+  return crypto.randomBytes(6).toString('base64').slice(0, 10);
+};
 
 // ACC-001: Inicio de Sesión 
 export const loginUser = async (email, password) => {
@@ -41,15 +46,23 @@ export const loginUser = async (email, password) => {
     expiresIn: process.env.JWT_EXPIRES_IN
   });
 
-  // 6. Retornar token y usuario
+  // 6. Registrar sesión activa del usuario
+  //await registerUserSession(user.id_user);
+
+  // 7. Retornar token y usuario
   return {
     token,
     user: {
-      id_user: user.id_user,
-      first_name: user.first_name,
-      last_name: user.last_name,
+      id: user.id_user.toString(),
+      name: user.first_name,
+      lastName: user.last_name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      state: user.status.toLowerCase(),
+      rut: user.rut,
+      gender: user.gender,
+      birthdate: user.date_of_birth,
+      authMethod: 'email'
     }
   };
 };
@@ -115,11 +128,11 @@ export const registerUser = async (data) => {
 
   // 8. Reglas de contraseña (ERS)
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/;
 
   if (!passwordRegex.test(password)) {
     throw new Error(
-      'La contraseña debe tener entre 8 y 15 caracteres, incluir mayúscula, minúscula, número y símbolo'
+      'La contraseña debe tener entre 8 y 30 caracteres, incluir mayúscula, minúscula, número y símbolo'
     );
   }
 
@@ -160,6 +173,11 @@ export const registerUser = async (data) => {
   };
 };
 
+// ACC-003: Cerrar sesión
+export const logoutUserService = async (userId) => {
+  await deactivateUserSession(userId);
+};
+
 // ACC-004: Solicitar recuperación
 export const recoverPassword = async (email) => {
   const user = await findUserByEmail(email);
@@ -173,7 +191,7 @@ export const recoverPassword = async (email) => {
 
   await saveResetToken(email, token, expires);
 
-  const link = `${process.env.FRONTEND_URL}/acceso/restablecer-contrasena?token=${token}`;
+  const link = `${process.env.FRONTEND_URL}/access/reset-password/${token}`;
 
   await sendResetPasswordEmail(
     email,
@@ -199,11 +217,11 @@ export const resetPassword = async (token, newPassword) => {
   }
 
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,15}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,30}$/;
 
   if (!passwordRegex.test(newPassword)) {
     throw new Error(
-      'La contraseña debe tener entre 8 y 15 caracteres, incluir mayúscula, minúscula, número y símbolo'
+      'La contraseña debe tener entre 8 y 30 caracteres, incluir mayúscula, minúscula, número y símbolo'
     );
   }
 
@@ -212,4 +230,78 @@ export const resetPassword = async (token, newPassword) => {
   await updatePassword(user.id_user, password_hash);
 
   return { message: 'Contraseña actualizada correctamente' };
+};
+
+export const completeGoogleRegistration = async (
+  id_user,
+  rut,
+  gender,
+  date_of_birth
+) => {
+
+  if (!rut) throw new Error('Falta completar el campo RUT');
+  if (!gender) throw new Error('Falta completar el campo Género');
+  if (!date_of_birth) throw new Error('Falta completar el campo Fecha de nacimiento');
+
+  // Validación formato RUT
+  const rutRegex = /^\d{7,8}[0-9Kk]$/;
+  if (!rutRegex.test(rut)) {
+    throw new Error('El RUT debe ingresarse sin puntos ni guión');
+  }
+
+  if (!isValidRut(rut)) {
+    throw new Error('El RUT ingresado no es válido');
+  }
+
+  const existingRut = await findUserByRut(rut);
+  if (existingRut) {
+    throw new Error('El RUT ya se encuentra registrado');
+  }
+
+  // Calcular edad
+  const birthDate = new Date(date_of_birth);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (monthDiff < 0 || 
+     (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  if (age < 16) {
+    throw new Error('Debe tener al menos 16 años para registrarse');
+  }
+
+  // Generar contraseña automática
+const plainPassword = generateRandomPassword();
+
+// Hash contraseña
+const password_hash = await bcrypt.hash(plainPassword, 10);
+
+// Guardar datos + contraseña
+await updateGoogleUserData(
+  id_user,
+  rut,
+  gender,
+  date_of_birth,
+  password_hash
+);
+
+// Obtener usuario
+const user = await findUserById(id_user);
+
+// Enviar correo
+await sendGoogleWelcomeEmail(
+  user.email,
+  user.first_name,
+  plainPassword
+);
+
+return {
+  message: 'Registro completado correctamente. Se ha enviado una contraseña a tu correo.',
+  age
+};
+
 };

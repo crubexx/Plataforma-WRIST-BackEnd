@@ -1,6 +1,8 @@
 Descargar en extensiones "Thunder Client" luego te saldrá una flecha en la barra de la
 izquierda que es el logo, le das a New Request y ahí haces las solicitudes
 
+Authorization Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjo0LCJlbWFpbCI6InByb2R1bGFiLnVjbkBnbWFpbC5jb20iLCJyb2xlIjoiU1VQRVJBRE1JTiIsImlhdCI6MTc2OTA0NDk4NiwiZXhwIjoxNzY5MTMxMzg2fQ.TywHdQdhn1I0RM_qUwDySJWu6DbDAvHkiE7CmpOs1zU
+
 // ACC-001
 http://localhost:3000/api/auth/login
 {

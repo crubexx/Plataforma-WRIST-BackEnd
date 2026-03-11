@@ -1,4 +1,4 @@
-import { loginUser, registerUser, recoverPassword, resetPassword } from '../services/authService.js';
+import { loginUser, registerUser, recoverPassword, resetPassword, logoutUserService, completeGoogleRegistration } from '../services/authService.js';
 import { authenticateWithGoogle } from '../services/googleAuthService.js';
 
 
@@ -13,18 +13,27 @@ export const login = async (req, res) => {
   }
 
   try {
-    const user = await loginUser(email, password);
+    const result = await loginUser(email, password);
 
-    if (!user) {
+    if (!result) {
       return res.status(401).json({
         message: 'Correo o contraseña incorrectos'
       });
     }
 
-    return res.status(200).json(user);
+    return res.status(200).json(result);
   } catch (error) {
+    console.error('Login error:', error.message);
+
+    if (error.message.includes('cuenta no se encuentra activa')) {
+      return res.status(403).json({
+        message: error.message
+      });
+    }
+
     return res.status(500).json({
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };
@@ -43,9 +52,18 @@ export const register = async (req, res) => {
 
 // ACC-003: Cerrar Sesión
 export const logout = async (req, res) => {
-  return res.status(200).json({
-    message: 'Sesión cerrada correctamente'
-  });
+  try {
+    await logoutUserService(req.user.id_user);
+
+    return res.status(200).json({
+      message: 'Sesión cerrada correctamente'
+    });
+  } catch (error) {
+    console.error('Error logout:', error);
+    return res.status(500).json({
+      message: 'Error al cerrar sesión'
+    });
+  }
 };
 
 // ACC-004: Cambiar contraseña
@@ -103,3 +121,26 @@ export const googleAuth = async (req, res) => {
     });
   }
 };
+
+export const completeGoogleProfile = async (req, res) => {
+  try {
+    const id_user = req.user.id_user;
+
+    const { rut, gender, date_of_birth } = req.body;
+
+    const result = await completeGoogleRegistration(
+      id_user,
+      rut,
+      gender,
+      date_of_birth
+    );
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+

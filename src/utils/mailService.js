@@ -1,5 +1,274 @@
 import nodemailer from 'nodemailer';
 
+export const sendAdminWelcomeEmail = async (to, nombre, password) => {
+  if (!to) {
+    throw new Error('Correo del admin no definido');
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuenta Admin creada - WRIST</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F2F2F2;">
+    
+    <!-- Wrapper Principal -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #F2F2F2;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                
+                <!-- Container Central -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                    
+                    <!-- Header con Gradiente -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #023859 0%, #265D73 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
+                                WRIST
+                            </h1>
+                            <p style="margin: 10px 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">
+                                Work Research in Integrated Socio-technical Tracking
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Contenido Principal -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            
+                            <!-- Icono de Admin -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="text-align: center; padding-bottom: 30px;">
+                                        <div style="width: 80px; height: 80px; background: #FEF3E2; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 40px;">👤</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Título -->
+                            <h2 style="margin: 0 0 20px; color: #023859; font-size: 24px; font-weight: 700; text-align: center;">
+                                Cuenta de Administrador Creada
+                            </h2>
+                            
+                            <!-- Saludo -->
+                            <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>${nombre}</strong>,
+                            </p>
+                            
+                            <!-- Mensaje Principal -->
+                            <p style="margin: 0 0 20px; color: #374151; font-size: 16px; line-height: 1.6;">
+                                Se ha creado una cuenta de <strong>Administrador</strong> para ti en la plataforma WRIST. A continuación encontrarás tus credenciales de acceso.
+                            </p>
+                            
+                            <!-- Credenciales -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 10px; color: #023859; font-size: 14px; font-weight: 600;">
+                                            🔑 Credenciales de Acceso
+                                        </p>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <strong style="color: #6b7280; font-size: 14px;">Correo:</strong>
+                                                    <span style="color: #374151; font-size: 14px; margin-left: 10px;">${to}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <strong style="color: #6b7280; font-size: 14px;">Contraseña:</strong>
+                                                    <code style="background: #ffffff; padding: 4px 8px; border-radius: 4px; color: #F28F16; font-size: 14px; margin-left: 10px; font-family: monospace;">${password}</code>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Botón CTA -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="text-align: center; padding: 0 0 30px;">
+                                        <a href="${process.env.FRONTEND_URL}/acceso/login" 
+                                           style="display: inline-block; padding: 16px 40px; background-color: #F28F16; color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(242, 143, 22, 0.3);">
+                                            Iniciar Sesión
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Información Importante -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #E8F4F8; border-left: 4px solid #265D73; border-radius: 4px; padding: 20px; margin-bottom: 30px;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 10px; color: #023859; font-size: 14px; font-weight: 600;">
+                                            ℹ️ Recomendaciones de Seguridad
+                                        </p>
+                                        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.8;">
+                                            <li>Cambia tu contraseña al iniciar sesión por primera vez</li>
+                                            <li>Usa una contraseña segura con mayúsculas, minúsculas, números y símbolos</li>
+                                            <li>No compartas tus credenciales con nadie</li>
+                                            <li>Cierra sesión al terminar de usar la plataforma</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0 30px;">
+                            <div style="border-top: 1px solid #e5e7eb;"></div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; text-align: center; background-color: #f9fafb;">
+                            
+                            <!-- Ayuda -->
+                            <p style="margin: 0 0 15px; color: #6b7280; font-size: 14px;">
+                                ¿Necesitas ayuda? 
+                                <a href="mailto:soporte@wrist.cl" style="color: #F28F16; text-decoration: none; font-weight: 600;">
+                                    Contáctanos
+                                </a>
+                            </p>
+                            
+                            <!-- Copyright -->
+                            <p style="margin: 0 0 10px; color: #9ca3af; font-size: 12px;">
+                                © 2026 WRIST - Universidad Católica del Norte
+                            </p>
+                            
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                Laboratorio de Producción UCN, Antofagasta, Chile
+                            </p>
+                            
+                            <!-- Nota automática -->
+                            <p style="margin: 15px 0 0; color: #9ca3af; font-size: 11px;">
+                                Este es un correo automático. Por favor, no respondas a este mensaje.
+                            </p>
+                            
+                        </td>
+                    </tr>
+                    
+                </table>
+                
+            </td>
+        </tr>
+    </table>
+    
+</body>
+</html>
+`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject: 'Cuenta Admin creada - WRIST',
+    html
+  });
+};
+
+export const sendTeacherWelcomeEmail = async (to, nombre, password) => {
+  if (!to) {
+    throw new Error('Correo del docente no definido');
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cuenta Docente creada - WRIST</title>
+</head>
+<body style="font-family: Arial; background:#f2f2f2; padding:20px;">
+  <table width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:10px;">
+    <tr>
+      <td style="background:#023859;color:#fff;padding:30px;text-align:center;">
+        <h1>WRIST</h1>
+        <p>Cuenta Docente creada</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding:30px;">
+        <p>Hola <strong>${nombre}</strong>,</p>
+
+        <p>
+          Un administrador ha creado una cuenta de <strong>Docente</strong>
+          para ti en la plataforma WRIST.
+        </p>
+
+        <p><strong>Credenciales de acceso:</strong></p>
+        <ul>
+          <li><strong>Correo:</strong> ${to}</li>
+          <li><strong>Contraseña:</strong> ${password}</li>
+        </ul>
+
+        <p>
+          Por seguridad, te recomendamos cambiar tu contraseña al iniciar sesión.
+        </p>
+
+        <p style="text-align:center;margin-top:30px;">
+          <a href="${process.env.FRONTEND_URL}/acceso/login"
+             style="background:#F28F16;color:#fff;padding:12px 25px;
+                    border-radius:6px;text-decoration:none;">
+            Iniciar sesión
+          </a>
+        </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="text-align:center;padding:20px;color:#999;font-size:12px;">
+        © 2026 WRIST - Universidad Católica del Norte
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject: 'Cuenta Docente creada - WRIST',
+    html
+  });
+};
+
 export const sendResetPasswordEmail = async (to, resetUrl, nombre) => {
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -163,7 +432,7 @@ export const sendResetPasswordEmail = async (to, resetUrl, nombre) => {
                             
                             <!-- Copyright -->
                             <p style="margin: 0 0 10px; color: #9ca3af; font-size: 12px;">
-                                © 2025 WRIST - Universidad Católica del Norte
+                                © 2026 WRIST - Universidad Católica del Norte
                             </p>
                             
                             <p style="margin: 0; color: #9ca3af; font-size: 12px;">
@@ -188,13 +457,182 @@ export const sendResetPasswordEmail = async (to, resetUrl, nombre) => {
 </html>
 `
 
-.replace(/{{nombre}}/g, nombre)
-.replace(/{{enlace_recuperacion}}/g, resetUrl);
+    .replace(/{{nombre}}/g, nombre)
+    .replace(/{{enlace_recuperacion}}/g, resetUrl);
 
   await transporter.sendMail({
     from: process.env.MAIL_FROM,
     to,
     subject: 'Recuperación de contraseña - WRIST',
+    html
+  });
+};
+
+export const sendGoogleWelcomeEmail = async (to, nombre, password) => {
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuenta creada con Google - WRIST</title>
+</head>
+
+<body style="margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#F2F2F2;">
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#F2F2F2;">
+<tr>
+<td style="padding:40px 20px;">
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:600px;margin:0 auto;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);overflow:hidden;">
+
+<tr>
+<td style="background:linear-gradient(135deg,#023859 0%,#265D73 100%);padding:40px 30px;text-align:center;">
+<h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:700;">WRIST</h1>
+<p style="margin:10px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">
+Work Research in Integrated Socio-technical Tracking
+</p>
+</td>
+</tr>
+
+<tr>
+<td style="padding:40px 30px;">
+
+<table width="100%">
+<tr>
+<td style="text-align:center;padding-bottom:30px;">
+<div style="width:80px;height:80px;background:#E8F4F8;border-radius:50%;margin:auto;display:flex;align-items:center;justify-content:center;">
+<span style="font-size:40px;">🔑</span>
+</div>
+</td>
+</tr>
+</table>
+
+<h2 style="margin:0 0 20px;color:#023859;font-size:24px;font-weight:700;text-align:center;">
+Cuenta creada con Google
+</h2>
+
+<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+Hola <strong>${nombre}</strong>,
+</p>
+
+<p style="margin:0 0 20px;color:#374151;font-size:16px;line-height:1.6;">
+Tu cuenta en <strong>WRIST</strong> fue creada usando tu cuenta de Google.
+Para que también puedas iniciar sesión con correo y contraseña,
+hemos generado una contraseña para ti.
+</p>
+
+<table width="100%" style="background:#f9fafb;border-radius:8px;padding:20px;margin-bottom:30px;">
+<tr>
+<td>
+
+<p style="margin:0 0 10px;color:#023859;font-size:14px;font-weight:600;">
+🔑 Credenciales de acceso
+</p>
+
+<p style="margin:8px 0;">
+<strong>Correo:</strong> ${to}
+</p>
+
+<p style="margin:8px 0;">
+<strong>Contraseña:</strong>
+<code style="background:#ffffff;padding:4px 8px;border-radius:4px;color:#F28F16;">
+${password}
+</code>
+</p>
+
+</td>
+</tr>
+</table>
+
+<table width="100%">
+<tr>
+<td style="text-align:center;padding-bottom:30px;">
+<a href="${process.env.FRONTEND_URL}/access/login"
+style="display:inline-block;padding:16px 40px;background:#F28F16;color:#ffffff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;box-shadow:0 4px 12px rgba(242,143,22,0.3);">
+Iniciar Sesión
+</a>
+</td>
+</tr>
+</table>
+
+<table width="100%" style="background:#E8F4F8;border-left:4px solid #265D73;border-radius:4px;padding:20px;margin-bottom:30px;">
+<tr>
+<td>
+
+<p style="margin:0 0 10px;color:#023859;font-size:14px;font-weight:600;">
+ℹ️ Recomendación de seguridad
+</p>
+
+<ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:1.8;">
+<li>Te recomendamos cambiar esta contraseña después de iniciar sesión</li>
+<li>Utiliza contraseñas seguras con mayúsculas, números y símbolos</li>
+<li>No compartas tus credenciales con nadie</li>
+</ul>
+
+</td>
+</tr>
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td style="padding:0 30px;">
+<div style="border-top:1px solid #e5e7eb;"></div>
+</td>
+</tr>
+
+<tr>
+<td style="padding:30px;text-align:center;background:#f9fafb;">
+
+<p style="margin:0 0 15px;color:#6b7280;font-size:14px;">
+¿Necesitas ayuda?
+<a href="mailto:soporte@wrist.cl" style="color:#F28F16;text-decoration:none;font-weight:600;">
+Contáctanos
+</a>
+</p>
+
+<p style="margin:0 0 10px;color:#9ca3af;font-size:12px;">
+© 2026 WRIST - Universidad Católica del Norte
+</p>
+
+<p style="margin:0;color:#9ca3af;font-size:12px;">
+Laboratorio de Producción UCN, Antofagasta, Chile
+</p>
+
+<p style="margin:15px 0 0;color:#9ca3af;font-size:11px;">
+Este es un correo automático. Por favor no respondas a este mensaje.
+</p>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject: 'Cuenta creada con Google - WRIST',
     html
   });
 };

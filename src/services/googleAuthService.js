@@ -102,17 +102,37 @@ export const authenticateWithGoogle = async (idToken) => {
         expiresIn: process.env.JWT_EXPIRES_IN
     });
 
-    // 8. Retornar token y usuario
+    // 8. Verificar para completar perfil
+    if (!userWithProvider.rut || 
+    !userWithProvider.gender || 
+    !userWithProvider.date_of_birth) {
+
+    return {
+        token,
+        requiresCompletion: true,
+        user: {
+            id: userWithProvider.id_user.toString(),
+            name: userWithProvider.first_name,
+            lastName: userWithProvider.last_name,
+            email: userWithProvider.email,
+            role: userWithProvider.role,
+            authMethod: 'google'
+        }
+    };
+}
+
+    // 9. Retornar token y usuario
     return {
         token,
         user: {
-            id_user: userWithProvider.id_user,
-            first_name: userWithProvider.first_name,
-            last_name: userWithProvider.last_name,
+            id: userWithProvider.id_user.toString(),
+            name: userWithProvider.first_name,
+            lastName: userWithProvider.last_name,
             email: userWithProvider.email,
             role: userWithProvider.role,
-            picture: userWithProvider.picture,
-            auth_provider: 'GOOGLE'
+            state: userWithProvider.status.toLowerCase(),
+            authMethod: 'google',
+            picture: userWithProvider.picture
         }
     };
 };

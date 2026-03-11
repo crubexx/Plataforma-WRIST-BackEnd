@@ -1,3 +1,5 @@
+src/scripts/
+
 # Logs
 logs
 *.log
@@ -70,6 +72,9 @@ web_modules/
 .env.*
 !.env.example
 
+# Docker local configuration
+docker-compose.yml
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -137,3 +142,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Temporary DB Check Scripts
+check_db.js
+src/config/check_db.js
+src/check_db_temp.js
